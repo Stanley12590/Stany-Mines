@@ -9,6 +9,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
     <style>
         /* === CYBERPUNK THEME === */
@@ -38,6 +39,7 @@
             -ms-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
         }
 
         body {
@@ -54,6 +56,11 @@
             overflow-x: hidden;
             position: relative;
             cursor: default;
+        }
+
+        /* Disable right-click */
+        body.oncontextmenu {
+            display: none !important;
         }
 
         /* Cyber grid background */
@@ -181,6 +188,7 @@
             cursor: pointer;
             font-size: 1rem;
             transition: all 0.3s;
+            padding: 5px;
         }
 
         .edit-username-btn:hover {
@@ -460,6 +468,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .predictor-user-info {
@@ -915,6 +925,7 @@
             opacity: 0;
             transition: opacity 0.3s, top 0.3s;
             text-align: center;
+            max-width: 90%;
         }
 
         .notification.show {
@@ -983,7 +994,7 @@
         }
 
         /* === RESPONSIVE === */
-        @media (min-width: 768px) {
+        @media (max-width: 768px) {
             .app-container {
                 max-width: 500px;
                 padding: 25px;
@@ -1000,6 +1011,49 @@
                 left: auto;
                 right: auto;
                 margin-top: 30px;
+            }
+            
+            .payment-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .reseller-codes {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .cyber-buttons {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+            
+            .cyber-btn {
+                padding: 15px 5px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .cyber-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .reseller-codes {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .cyber-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .floating-icons {
+                bottom: 80px;
+                right: 10px;
+            }
+            
+            .floating-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 1.3rem;
             }
         }
     </style>
@@ -1192,7 +1246,8 @@
                         <span style="background: linear-gradient(45deg, var(--neon-yellow), var(--neon-green)); color: #000; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem;">🔴 LIVE</span>
                     </div>
                     <div class="prediction-text" id="predictionDisplay">
-                        SELECT BOMB COUNT AND START
+                        SELECT BOMB COUNT AND START<br>
+                        Current time: <span class="cyber-highlight" id="currentTime">00:00</span>
                     </div>
                     
                     <div class="stats-grid">
@@ -1242,10 +1297,10 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
         const analytics = firebase.analytics();
 
         // ==================== GLOBAL VARIABLES ====================
-        const HARAKAPAY_API_KEY = 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae';
         const HARAKAPAY_BASE_URL = 'https://harakapay.net/api/v1';
         
         let deviceId = localStorage.getItem('deviceId');
@@ -1259,6 +1314,16 @@
         let premiumExpiry = null;
         let selectedPaymentOption = null;
         let username = localStorage.getItem('username') || 'GUEST USER';
+        let appSettings = {
+            appName: 'STANY MINES PREDICTOR',
+            whatsappNumber: '255000000000',
+            channelLink: 'https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18',
+            apiKey: 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae',
+            price7Days: 3000,
+            price30Days: 10000,
+            freeTrialCount: 2,
+            resellerCommission: 20
+        };
 
         // ==================== GAME STATE ====================
         const gameState = {
@@ -1292,15 +1357,73 @@
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', async () => {
+            // Disable right-click
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showNotification('Right-click disabled', 'warning');
+            });
+
             // Initialize user
             await initializeUser();
+            
+            // Load app settings
+            await loadAppSettings();
             
             // Update username display
             updateUsernameDisplay();
             
-            // Load admin settings
-            await loadAdminSettings();
+            // Update time
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 60000);
+
+            // Set up page navigation
+            setupPageNavigation();
         });
+
+        function setupPageNavigation() {
+            // Handle back button
+            window.addEventListener('popstate', function(event) {
+                goBackToMenu();
+            });
+        }
+
+        // ==================== APP SETTINGS ====================
+        async function loadAppSettings() {
+            try {
+                const settingsDoc = await db.collection('settings').doc('app').get();
+                if (settingsDoc.exists) {
+                    const settings = settingsDoc.data();
+                    appSettings = { ...appSettings, ...settings };
+                    
+                    // Update UI with settings
+                    appTitle.textContent = settings.appName || 'STANY MINES PREDICTOR';
+                    document.title = settings.appName || 'STANY MINES PREDICTOR';
+                    
+                    // Update WhatsApp links
+                    if (settings.whatsappNumber) {
+                        whatsappIcon.href = `https://wa.me/${settings.whatsappNumber}`;
+                    }
+                    
+                    // Update channel link
+                    if (settings.channelLink) {
+                        channelIcon.href = settings.channelLink;
+                    }
+                    
+                    // Update free trial count
+                    freeTriesLeft = settings.freeTrialCount || 2;
+                    
+                    // Update payment amounts
+                    document.querySelectorAll('.payment-option')[0].querySelector('.payment-amount').textContent = 
+                        `${(settings.price7Days || 3000).toLocaleString()} TZS`;
+                    document.querySelectorAll('.payment-option')[1].querySelector('.payment-amount').textContent = 
+                        `${(settings.price30Days || 10000).toLocaleString()} TZS`;
+                        
+                    updateStatusBadge();
+                }
+            } catch (error) {
+                console.error('Error loading app settings:', error);
+            }
+        }
 
         // ==================== USER MANAGEMENT ====================
         async function initializeUser() {
@@ -1357,20 +1480,20 @@
                     const hoursDiff = (now - lastUsed) / (1000 * 60 * 60);
                     
                     if (hoursDiff < 24) {
-                        freeTriesLeft = trialData.triesLeft || 2;
+                        freeTriesLeft = trialData.triesLeft || (appSettings.freeTrialCount || 2);
                     } else {
                         // Reset after 24 hours
-                        freeTriesLeft = 2;
+                        freeTriesLeft = appSettings.freeTrialCount || 2;
                         await db.collection('freeTrials').doc(deviceId).set({
-                            triesLeft: 2,
+                            triesLeft: freeTriesLeft,
                             lastUsed: new Date()
                         });
                     }
                 } else {
                     // First time user
-                    freeTriesLeft = 2;
+                    freeTriesLeft = appSettings.freeTrialCount || 2;
                     await db.collection('freeTrials').doc(deviceId).set({
-                        triesLeft: 2,
+                        triesLeft: freeTriesLeft,
                         lastUsed: new Date()
                     });
                 }
@@ -1378,6 +1501,7 @@
                 updateStatusBadge();
             } catch (error) {
                 console.error('Error initializing user:', error);
+                showNotification('Failed to initialize user', 'error');
             } finally {
                 hideLoading();
             }
@@ -1602,16 +1726,16 @@
             
             try {
                 const codesSnapshot = await db.collection('premiumCodes')
-                    .where('reseller', '==', true)
+                    .where('reseller', '!=', null)
                     .where('used', '==', false)
-                    .limit(10)
+                    .limit(12)
                     .get();
 
                 const codesContainer = document.getElementById('resellerCodes');
                 codesContainer.innerHTML = '';
 
                 if (codesSnapshot.empty) {
-                    codesContainer.innerHTML = '<div class="info-text">No codes available</div>';
+                    codesContainer.innerHTML = '<div class="info-text">No codes available at the moment</div>';
                     hideLoading();
                     return;
                 }
@@ -1645,7 +1769,14 @@
                 showNotification('Code copied to clipboard', 'success');
             }).catch(err => {
                 console.error('Failed to copy:', err);
-                showNotification('Failed to copy code', 'error');
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showNotification('Code copied to clipboard', 'success');
             });
         }
 
@@ -1686,7 +1817,7 @@
                 return;
             }
 
-            const amount = selectedPaymentOption === 1 ? 3000 : 10000;
+            const amount = selectedPaymentOption === 1 ? (appSettings.price7Days || 3000) : (appSettings.price30Days || 10000);
             const duration = selectedPaymentOption === 1 ? 7 : 30;
 
             showLoading('Processing payment...');
@@ -1697,7 +1828,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-API-Key': HARAKAPAY_API_KEY
+                        'X-API-Key': appSettings.apiKey || 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae'
                     },
                     body: JSON.stringify({
                         phone: phone,
@@ -1742,7 +1873,7 @@
 
         async function pollPaymentStatus(orderId, duration) {
             let attempts = 0;
-            const maxAttempts = 60;
+            const maxAttempts = 60; // Poll for 5 minutes (5 seconds interval)
 
             const checkStatus = async () => {
                 attempts++;
@@ -1750,7 +1881,7 @@
                 try {
                     const response = await fetch(`${HARAKAPAY_BASE_URL}/status/${orderId}`, {
                         headers: {
-                            'X-API-Key': HARAKAPAY_API_KEY
+                            'X-API-Key': appSettings.apiKey || 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae'
                         }
                     });
 
@@ -1775,7 +1906,7 @@
                     }
 
                     if (attempts < maxAttempts) {
-                        setTimeout(checkStatus, 5000);
+                        setTimeout(checkStatus, 5000); // Check every 5 seconds
                     } else {
                         document.getElementById('paymentMessage').innerHTML = 
                             '<div class="error-text">Payment timeout. Please try again.</div>';
@@ -1822,7 +1953,7 @@
                 premiumCode: premiumCode,
                 expiryDate: expiryDate,
                 activatedAt: new Date(),
-                paymentAmount: duration === 7 ? 3000 : 10000
+                paymentAmount: duration === 7 ? (appSettings.price7Days || 3000) : (appSettings.price30Days || 10000)
             }, { merge: true });
 
             userStatus = 'premium';
@@ -1832,19 +1963,17 @@
 
         // ==================== PREDICTOR GAME ====================
         function initializePredictor() {
-            // Initialize game grid
-            renderGrid();
-            
-            // Initialize bomb selection
             renderBombSelection();
-
-            // Set up event listeners
-            document.getElementById('startBtn').onclick = startGame;
-            document.getElementById('resetBtn').onclick = resetGame;
-
-            // Update time display
+            renderGrid();
             updateCurrentTime();
             updatePrediction('SELECT BOMB COUNT AND START');
+            
+            document.getElementById('bombCount').textContent = gameState.bombs;
+            document.getElementById('safeCount').textContent = '?';
+            document.getElementById('accuracy').textContent = '?';
+            
+            document.getElementById('startBtn').onclick = startGame;
+            document.getElementById('resetBtn').onclick = resetGame;
         }
 
         function renderBombSelection() {
@@ -1886,19 +2015,24 @@
 
         function selectBombs(count) {
             gameState.bombs = count;
-            
-            // Update UI
-            document.querySelectorAll('.cyber-btn').forEach(btn => {
-                btn.classList.remove('selected');
-                if (parseInt(btn.textContent) === count) {
-                    btn.classList.add('selected');
-                }
-            });
+            renderBombSelection();
             
             document.getElementById('bombCount').textContent = count;
+            document.getElementById('safeCount').textContent = '?';
+            document.getElementById('accuracy').textContent = '?';
             
-            // Update prediction message
-            updatePrediction(`BOMBS SET TO ${count}. READY FOR ANALYSIS.`);
+            const currentTime = getFormattedTime();
+            
+            if (count >= 5) {
+                updatePrediction(`⚠️ <span class="danger-highlight">HIGH RISK WARNING!</span> ⚠️<br>
+                ${count} BOMBS DETECTED - DANGER!<br>
+                Survival probability: <span class="danger-highlight">${Math.round((25-count)/25*100)}%</span><br>
+                Current time: <span class="cyber-highlight">${currentTime}</span><br>
+                <span class="cyber-highlight">Advice: Choose lower bomb (2-3) for better odds</span>`);
+            } else {
+                updatePrediction(`BOMBS SET TO: ${count}. READY FOR ANALYSIS.<br>
+                Current time: <span class="cyber-highlight">${currentTime}</span>`);
+            }
         }
 
         async function startGame() {
@@ -1913,17 +2047,20 @@
                 return;
             }
 
-            showLoading('GENERATING MINEFIELD...');
-            loadingText.textContent = "GENERATING MINEFIELD";
+            showLoading('GENERATING MINEFIELD');
+            
+            document.getElementById('safeCount').innerHTML = '<span style="color: var(--neon-pink); animation: pulse 1.5s infinite;">loading...</span>';
+            document.getElementById('accuracy').innerHTML = '<span style="color: var(--neon-pink); animation: pulse 1.5s infinite;">loading...</span>';
 
-            // Reset game state
+            await sleep(800);
+
             gameState.active = true;
             gameState.mines = [];
+            gameState.safeCells = [];
             gameState.revealed = [];
             gameState.recommendations = [];
             gameState.bestChoices = [];
 
-            // Generate mines
             const positions = Array.from({length: gameState.gridSize}, (_, i) => i);
             for (let i = 0; i < gameState.bombs; i++) {
                 const randomIndex = Math.floor(Math.random() * positions.length);
@@ -1931,7 +2068,9 @@
                 positions.splice(randomIndex, 1);
             }
 
-            // Generate safe cells to reveal
+            loadingText.textContent = 'ANALYZING PATTERNS';
+            await sleep(800);
+
             const totalSafe = gameState.gridSize - gameState.bombs;
             const cellsToReveal = Math.floor(totalSafe * (0.4 + Math.random() * 0.2));
             
@@ -1945,45 +2084,36 @@
                 positions.splice(positions.indexOf(safeCell), 1);
             }
 
-            // Calculate recommendations
+            loadingText.textContent = 'CALCULATING PROBABILITIES';
+            await sleep(800);
             calculateRecommendations();
 
-            // For high-risk games (5+ bombs), only show safest 1 cell
             if (gameState.bombs >= 5) {
                 gameState.recommendations = gameState.bestChoices.slice(0, 1);
             }
 
-            // Update grid with animation
-            loadingText.textContent = "ANALYZING PATTERNS";
-            await sleep(800);
-            
-            loadingText.textContent = "CALCULATING PROBABILITIES";
-            await sleep(800);
-            
-            loadingText.textContent = "RENDERING RESULTS";
+            loadingText.textContent = 'RENDERING RESULTS';
             await sleep(600);
-            
             hideLoading();
 
-            // Animate and reveal grid
             await animateGridReveal();
             
-            // Update user usage count
-            await updateUsageCount();
+            if (userStatus === 'free') {
+                await updateUsageCount();
+            }
         }
 
         function resetGame() {
             gameState.active = false;
             gameState.mines = [];
+            gameState.safeCells = [];
             gameState.revealed = [];
             gameState.recommendations = [];
             gameState.bestChoices = [];
 
-            // Reset stats display
-            document.getElementById('safeCount').textContent = "?";
-            document.getElementById('accuracy').textContent = "?";
+            document.getElementById('safeCount').textContent = '?';
+            document.getElementById('accuracy').textContent = '?';
             
-            // Reset grid with animation
             document.querySelectorAll('.grid-cell').forEach((cell, index) => {
                 cell.className = 'grid-cell';
                 cell.textContent = '?';
@@ -1995,9 +2125,10 @@
                 }, index * 20);
             });
 
-            // Show reset message
-            updatePrediction('SYSTEM RESET. SELECT BOMBS AND START.');
-            showNotification("SYSTEM RESET", "info");
+            const currentTime = getFormattedTime();
+            updatePrediction(`SYSTEM RESET. SELECT BOMBS AND START ANALYSIS.<br>
+            Current time: <span class="cyber-highlight">${currentTime}</span>`);
+            showNotification('SYSTEM RESET', 'info');
         }
 
         function calculateRecommendations() {
@@ -2007,7 +2138,6 @@
                 !gameState.revealed.includes(i)
             );
 
-            // Calculate safety scores based on distance from mines
             const scores = unrevealedSafe.map(index => {
                 const neighbors = getNeighbors(index);
                 const mineNeighbors = neighbors.filter(n => gameState.mines.includes(n));
@@ -2019,7 +2149,6 @@
                 score -= mineNeighbors.length * 30;
                 score += safeNeighbors.length * 15;
                 
-                // Bonus for corner cells
                 const row = Math.floor(index / 5);
                 const col = index % 5;
                 if ((row === 0 || row === 4) && (col === 0 || col === 4)) {
@@ -2029,14 +2158,11 @@
                 return { index, score };
             });
 
-            // Sort by score (highest first)
             scores.sort((a, b) => b.score - a.score);
 
-            // Get recommendations (top 3-4)
             const numRecommendations = Math.min(3, scores.length);
             gameState.recommendations = scores.slice(0, numRecommendations).map(s => s.index);
 
-            // Get best choice (top score)
             if (scores.length > 0) {
                 gameState.bestChoices = [scores[0].index];
             }
@@ -2060,7 +2186,6 @@
         async function animateGridReveal() {
             const cells = document.querySelectorAll('.grid-cell');
             
-            // First, show all cells as loading
             for (let i = 0; i < cells.length; i++) {
                 cells[i].classList.add('loading');
                 cells[i].style.animationDelay = `${i * 0.05}s`;
@@ -2068,7 +2193,6 @@
             
             await sleep(1500);
 
-            // Reveal mines and safe cells
             for (let i = 0; i < cells.length; i++) {
                 const cell = cells[i];
                 cell.classList.remove('loading');
@@ -2081,7 +2205,6 @@
                     cell.textContent = '💎';
                 }
                 
-                // Add recommendation markers
                 if (gameState.recommendations.includes(i)) {
                     cell.classList.add('recommended');
                 }
@@ -2089,37 +2212,37 @@
                     cell.classList.add('best-choice');
                 }
 
-                // Animate reveal
+                if (!gameState.mines.includes(i)) {
+                    cell.classList.add('safe');
+                }
+
                 cell.style.animationDelay = `${i * 0.1}s`;
                 cell.classList.add('revealed');
                 
                 await sleep(50);
             }
 
-            // Update stats
             document.getElementById('safeCount').textContent = gameState.gridSize - gameState.bombs;
+            
             const randomAccuracy = 95 + Math.floor(Math.random() * 6);
             document.getElementById('accuracy').textContent = `${randomAccuracy}%`;
 
-            // Update prediction display
             updatePredictionDisplay();
-            showNotification("ANALYSIS COMPLETE", "success");
+            showNotification('ANALYSIS COMPLETE', 'success');
         }
 
         function updatePredictionDisplay() {
             if (gameState.recommendations.length > 0) {
                 const recNumbers = gameState.recommendations.map(i => i + 1);
                 const bestChoice = gameState.bestChoices[0] + 1;
-                const currentTime = getCurrentTimeFormatted();
+                const currentTime = getFormattedTime();
                 
                 let prediction = `SCANING <span class="cyber-highlight">COMPLETED</span> THESE ARE YOUR <span class="cyber-highlight">SAFE</span> PICKS FOR THIS ROUND 🟢<br><br>`;
                 
-                // Add time information
                 prediction += `<span style="color: var(--neon-blue); font-size: 0.9rem;">
                     ⏰ PREDICTION TIME: <span class="cyber-highlight">${currentTime}</span>
                 </span><br>`;
                 
-                // Special warning for high-risk games
                 if (gameState.bombs >= 5) {
                     prediction += `<span class="danger-highlight">⚠️ HIGH RISK GAME ⚠️</span><br>`;
                     prediction += `With ${gameState.bombs} bombs, survival chance: <span class="danger-highlight">${Math.round((25-gameState.bombs)/25*100)}%</span><br><br>`;
@@ -2132,18 +2255,11 @@
                 }
                 
                 document.getElementById('predictionDisplay').innerHTML = prediction;
-            } else {
-                updatePrediction("ANALYSIS IN PROGRESS...");
             }
         }
 
         function updatePrediction(message) {
-            const predictionText = message
-                .replace(/SAFE/gi, '<span class="cyber-highlight">$&</span>')
-                .replace(/BOMB/gi, '<span class="danger-highlight">$&</span>')
-                .replace(/\d+/g, '<span class="cyber-highlight">$&</span>');
-            
-            document.getElementById('predictionDisplay').innerHTML = predictionText;
+            document.getElementById('predictionDisplay').innerHTML = message;
         }
 
         async function updateUsageCount() {
@@ -2184,7 +2300,21 @@
             }, 3000);
         }
 
-        function getCurrentTimeFormatted() {
+        function updateCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            const timeString = `${hours}:${minutes} ${ampm}`;
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        function getFormattedTime() {
             const now = new Date();
             let hours = now.getHours();
             let minutes = now.getMinutes();
@@ -2197,49 +2327,111 @@
             return `${hours}:${minutes} ${ampm}`;
         }
 
-        function updateCurrentTime() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const timeElements = document.querySelectorAll('#currentTime');
-            if (timeElements.length > 0) {
-                timeElements[0].textContent = timeString;
-            }
-        }
-
         function sleep(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
-        async function loadAdminSettings() {
-            try {
-                const settingsDoc = await db.collection('settings').doc('app').get();
-                if (settingsDoc.exists) {
-                    const settings = settingsDoc.data();
-                    
-                    // Update WhatsApp number
-                    if (settings.whatsappNumber) {
-                        whatsappIcon.href = `https://wa.me/${settings.whatsappNumber}`;
-                    }
-                    
-                    // Update channel link
-                    if (settings.channelLink) {
-                        channelIcon.href = settings.channelLink;
-                    }
-                    
-                    // Update app name
-                    if (settings.appName) {
-                        appTitle.textContent = settings.appName;
-                        document.title = settings.appName;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading admin settings:', error);
-            }
         }
 
         function showInfo() {
             showNotification(`App Version: 2.0.0 | Username: ${username} | Status: ${userStatus}`, 'info');
         }
+
+        // ==================== REAL-TIME UPDATES ====================
+        // Listen for app settings updates
+        db.collection('settings').doc('app').onSnapshot((doc) => {
+            if (doc.exists) {
+                const settings = doc.data();
+                appSettings = { ...appSettings, ...settings };
+                
+                // Update UI
+                appTitle.textContent = settings.appName || 'STANY MINES PREDICTOR';
+                document.title = settings.appName || 'STANY MINES PREDICTOR';
+                
+                if (settings.whatsappNumber) {
+                    whatsappIcon.href = `https://wa.me/${settings.whatsappNumber}`;
+                }
+                
+                if (settings.channelLink) {
+                    channelIcon.href = settings.channelLink;
+                }
+                
+                // Update payment amounts
+                document.querySelectorAll('.payment-option')[0].querySelector('.payment-amount').textContent = 
+                    `${(settings.price7Days || 3000).toLocaleString()} TZS`;
+                document.querySelectorAll('.payment-option')[1].querySelector('.payment-amount').textContent = 
+                    `${(settings.price30Days || 10000).toLocaleString()} TZS`;
+                
+                // Update free trial count if user is free
+                if (userStatus === 'free') {
+                    freeTriesLeft = settings.freeTrialCount || 2;
+                    updateStatusBadge();
+                }
+            }
+        });
+
+        // ==================== OFFLINE SUPPORT ====================
+        // Save app state
+        function saveAppState() {
+            const state = {
+                deviceId: deviceId,
+                username: username,
+                userStatus: userStatus,
+                freeTriesLeft: freeTriesLeft,
+                premiumExpiry: premiumExpiry,
+                lastUpdated: Date.now()
+            };
+            localStorage.setItem('appState', JSON.stringify(state));
+        }
+
+        // Load app state
+        function loadAppState() {
+            const saved = localStorage.getItem('appState');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    deviceId = state.deviceId || deviceId;
+                    username = state.username || username;
+                    userStatus = state.userStatus || userStatus;
+                    freeTriesLeft = state.freeTriesLeft || freeTriesLeft;
+                    premiumExpiry = state.premiumExpiry || premiumExpiry;
+                    
+                    updateUsernameDisplay();
+                    updateStatusBadge();
+                } catch (e) {
+                    console.error('Error loading app state:', e);
+                }
+            }
+        }
+
+        // Auto-save every 30 seconds
+        setInterval(saveAppState, 30000);
+
+        // Load saved state on startup
+        loadAppState();
+
+        // ==================== ERROR HANDLING ====================
+        window.addEventListener('error', function(event) {
+            console.error('Global error:', event.error);
+            showNotification('An error occurred. Please refresh the page.', 'error');
+        });
+
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled promise rejection:', event.reason);
+            showNotification('An error occurred. Please try again.', 'error');
+        });
+
+        // ==================== EXPORT FUNCTIONS ====================
+        window.openUsernameModal = openUsernameModal;
+        window.closeUsernameModal = closeUsernameModal;
+        window.saveUsername = saveUsername;
+        window.goBackToMenu = goBackToMenu;
+        window.enterFreeTrial = enterFreeTrial;
+        window.enterPremiumCode = enterPremiumCode;
+        window.validatePremiumCode = validatePremiumCode;
+        window.showResellerPage = showResellerPage;
+        window.showPaymentPage = showPaymentPage;
+        window.selectPaymentOption = selectPaymentOption;
+        window.processPayment = processPayment;
+        window.showInfo = showInfo;
     </script>
 </body>
 </html>
