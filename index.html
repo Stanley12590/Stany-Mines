@@ -2,76 +2,214 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STANY MINES PRO | VIP Predictor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mines Predictor Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
-        /* === CYBERPUNK THEME === */
         :root {
-            --bg-color: #0a0e17;
-            --glass: rgba(15, 22, 39, 0.9);
-            --glass-border: rgba(0, 247, 255, 0.2);
-            --neon-blue: #00f7ff;
-            --neon-pink: #ff00ff;
-            --neon-green: #00ff9d;
-            --neon-red: #ff0055;
-            --neon-yellow: #ffcc00;
-            --text: #ffffff;
-            --text-muted: #8a9bbd;
-            --radius: 16px;
-            --font-main: 'Poppins', sans-serif;
-            --font-cyber: 'Orbitron', monospace;
-            --safe-green: #00ff88;
-            --danger-red: #ff3355;
-            --warning-orange: #ff9900;
-            --selection-yellow: #ffff00;
+            --primary: #0a0e17;
+            --secondary: #00f7ff;
+            --success: #00ff9d;
+            --danger: #ff0055;
+            --warning: #ffcc00;
+            --accent: #ff00ff;
+            --glass: rgba(15, 22, 39, 0.95);
         }
 
-        /* Prevent Copy/Right Click */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
         body {
+            background: var(--primary);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Disable right click */
+        body * {
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
             user-select: none;
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at 20% 80%, rgba(0, 247, 255, 0.15), transparent 40%),
-                radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.1), transparent 40%),
-                linear-gradient(45deg, rgba(10, 14, 23, 0.9), rgba(20, 25, 40, 0.9));
-            color: var(--text);
-            font-family: var(--font-main);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-top: 70px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: var(--glass);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid var(--secondary);
             position: relative;
         }
 
-        /* Cyber grid background */
-        body::before {
-            content: '';
+        .header h1 {
+            color: var(--secondary);
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--glass);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 247, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            color: var(--secondary);
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--secondary), #0066ff);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, var(--success), #00a86b);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, var(--warning), #ff9900);
+            color: black;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, var(--danger), #cc0044);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Inputs */
+        .input-control {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--secondary);
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        /* Loading */
+        .loading-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-image: 
-                linear-gradient(rgba(0, 247, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 247, 255, 0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-            z-index: -1;
-            animation: gridMove 20s linear infinite;
+            background: rgba(10, 14, 23, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
         }
 
-        @keyframes gridMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 30px 30px; }
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid transparent;
+            border-top-color: var(--secondary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass);
+            border-left: 4px solid var(--secondary);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+            z-index: 1001;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Back Button */
+        .back-btn {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: var(--glass);
+            border: 2px solid var(--secondary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            cursor: pointer;
         }
 
         /* WhatsApp Float */
@@ -84,1396 +222,560 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 30px;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.5);
             z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .whatsapp-float:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.7);
-        }
-
-        /* App Container */
-        .app-container {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 15px;
-        }
-
-        /* Pages */
-        .page {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Cyber Header */
-        .cyber-header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding: 20px;
-            background: rgba(10, 15, 30, 0.8);
-            border-radius: var(--radius);
-            border: 1px solid var(--glass-border);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-
-        .cyber-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-pink), transparent);
-            animation: scanline 3s linear infinite;
-        }
-
-        @keyframes scanline {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        .cyber-header h1 {
-            font-family: var(--font-cyber);
-            font-size: 1.8rem;
-            margin: 0;
-            background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-weight: 900;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            text-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
-        }
-
-        .cyber-header .subtitle {
-            font-family: var(--font-cyber);
-            color: var(--neon-green);
-            font-size: 0.8rem;
-            margin-top: 5px;
-            letter-spacing: 1px;
-        }
-
-        /* Cyber Section */
-        .cyber-section {
-            background: rgba(15, 22, 39, 0.9);
-            border-radius: var(--radius);
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--glass-border);
-            position: relative;
-            overflow: hidden;
-            backdrop-filter: blur(5px);
-        }
-
-        .cyber-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, transparent, rgba(0, 247, 255, 0.1), transparent);
-            z-index: 0;
-        }
-
-        .section-title {
-            font-family: var(--font-cyber);
-            font-size: 0.9rem;
-            color: var(--neon-blue);
-            font-weight: 600;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            display: inline-block;
-        }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, var(--neon-blue), transparent);
-        }
-
-        /* Input Styles */
-        .cyber-input {
-            width: 100%;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 2px solid var(--glass-border);
-            border-radius: 10px;
-            color: white;
-            font-family: var(--font-main);
-            font-size: 1rem;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            transition: all 0.3s;
-        }
-
-        .cyber-input:focus {
-            outline: none;
-            border-color: var(--neon-blue);
-            box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
-        }
-
-        /* Button Styles */
-        .cyber-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, var(--neon-blue), #0066ff);
-            color: #000;
-            border: none;
-            border-radius: 12px;
-            font-family: var(--font-cyber);
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .cyber-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 247, 255, 0.4);
-        }
-
-        .cyber-btn.success {
-            background: linear-gradient(135deg, var(--neon-green), #00a86b);
-        }
-
-        .cyber-btn.danger {
-            background: linear-gradient(135deg, var(--neon-red), #cc0044);
-        }
-
-        .cyber-btn.warning {
-            background: linear-gradient(135deg, var(--neon-yellow), orange);
-        }
-
-        /* Back Button */
-        .back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--glass-border);
-            color: var(--neon-blue);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.2rem;
-            z-index: 100;
-            transition: all 0.3s;
-        }
-
-        .back-btn:hover {
-            background: rgba(0, 247, 255, 0.1);
-            transform: scale(1.1);
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
         }
 
         /* Package Cards */
         .package-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
             gap: 15px;
-            margin-top: 20px;
+            margin: 20px 0;
         }
 
         .package-card {
             background: rgba(0, 0, 0, 0.3);
-            border: 2px solid var(--glass-border);
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 15px;
-            text-align: center;
+            border: 2px solid;
             cursor: pointer;
             transition: all 0.3s;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .package-card.selected {
-            border-color: var(--neon-green);
-            background: rgba(0, 255, 157, 0.1);
-            transform: scale(1.05);
         }
 
         .package-card:hover {
-            border-color: var(--neon-blue);
+            transform: translateY(-5px);
         }
 
-        .package-name {
-            font-family: var(--font-cyber);
-            color: var(--neon-blue);
-            font-size: 0.9rem;
-            margin-bottom: 5px;
+        .package-card.selected {
+            border-color: var(--warning);
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
         }
 
-        .package-price {
-            color: var(--neon-green);
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-        }
-
-        .package-duration {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-
-        /* Game Grid */
-        .cyber-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin: 20px auto;
-            max-width: 350px;
-        }
-
-        .grid-cell {
-            aspect-ratio: 1;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-cyber);
-            font-weight: 700;
-            font-size: 1.4rem;
-            cursor: pointer;
-            border: 2px solid rgba(0, 247, 255, 0.2);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .grid-cell.mine {
-            background: rgba(255, 0, 85, 0.3);
-            border-color: var(--neon-red);
-            color: white;
-            box-shadow: 
-                inset 0 0 20px rgba(255, 0, 85, 0.3),
-                0 0 20px rgba(255, 0, 85, 0.4);
-            animation: mineGlow 2s infinite;
-        }
-
-        .grid-cell.safe {
-            background: rgba(0, 255, 157, 0.2);
-            border-color: var(--neon-green);
-            color: white;
-            box-shadow: 
-                inset 0 0 20px rgba(0, 255, 157, 0.2),
-                0 0 15px rgba(0, 255, 157, 0.3);
-        }
-
-        .grid-cell.recommended {
-            position: relative;
-            overflow: visible;
-        }
-
-        .grid-cell.recommended::after {
-            content: '✰';
-            position: absolute;
-            top: -15px;
-            right: -10px;
-            font-size: 1rem;
-            animation: firePulse 1s infinite alternate;
-            filter: drop-shadow(0 0 5px orange);
-            z-index: 2;
-        }
-
-        @keyframes firePulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.2); opacity: 1; }
-        }
-
-        .grid-cell.best-choice {
-            background: linear-gradient(45deg, rgba(0, 255, 157, 0.3), rgba(0, 247, 255, 0.3));
-            border-color: var(--neon-yellow);
-            box-shadow: 
-                0 0 25px rgba(255, 204, 0, 0.4),
-                inset 0 0 25px rgba(255, 204, 0, 0.2);
-            animation: bestChoiceGlow 3s infinite alternate;
-        }
-
-        @keyframes bestChoiceGlow {
-            0% { box-shadow: 0 0 25px rgba(255, 204, 0, 0.4), inset 0 0 25px rgba(255, 204, 0, 0.2); }
-            100% { box-shadow: 0 0 35px rgba(255, 204, 0, 0.6), inset 0 0 35px rgba(255, 204, 0, 0.3); }
-        }
-
-        @keyframes mineGlow {
-            0%, 100% { box-shadow: inset 0 0 20px rgba(255, 0, 85, 0.3), 0 0 20px rgba(255, 0, 85, 0.4); }
-            50% { box-shadow: inset 0 0 30px rgba(255, 0, 85, 0.4), 0 0 30px rgba(255, 0, 85, 0.6); }
-        }
-
-        /* Status Badges */
-        .status-badge {
+        /* Status Badge */
+        .badge {
             display: inline-block;
-            padding: 5px 12px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            margin-left: 10px;
+            font-size: 12px;
+            font-weight: bold;
         }
 
-        .status-free {
-            background: linear-gradient(45deg, var(--neon-yellow), orange);
-            color: #000;
+        .badge-success {
+            background: rgba(0, 255, 157, 0.2);
+            color: var(--success);
         }
 
-        .status-premium {
-            background: linear-gradient(45deg, var(--neon-green), #00a86b);
-            color: #000;
+        .badge-danger {
+            background: rgba(255, 0, 85, 0.2);
+            color: var(--danger);
         }
 
-        .status-reseller {
-            background: linear-gradient(45deg, var(--neon-pink), #cc00ff);
-            color: white;
-        }
-
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 14, 23, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s;
-        }
-
-        .loading-overlay.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .cyber-loader {
-            width: 80px;
-            height: 80px;
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .cyber-loader::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            border: 4px solid transparent;
-            border-top-color: var(--neon-blue);
-            animation: spin 1.5s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Message Box */
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(15, 22, 39, 0.95);
-            border: 2px solid var(--neon-blue);
-            border-radius: var(--radius);
-            padding: 30px;
-            z-index: 3000;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            display: none;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 50px rgba(0, 247, 255, 0.3);
-        }
-
-        .message-box.active {
-            display: block;
-            animation: popIn 0.3s ease;
-        }
-
-        @keyframes popIn {
-            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 8px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .stat-value {
-            font-family: var(--font-cyber);
-            color: var(--neon-blue);
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-
-        .stat-label {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* Bomb Buttons */
-        .cyber-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .bomb-btn {
-            background: rgba(0, 0, 0, 0.4) !important;
-            border: 2px solid var(--neon-red);
-            color: white;
-            padding: 15px 5px;
-            border-radius: 10px;
-            font-family: var(--font-cyber);
-            font-weight: 700;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.4s;
-        }
-
-        .bomb-btn.safe-bomb {
-            border-color: var(--safe-green);
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-        }
-
-        .bomb-btn.high-risk {
-            border-color: var(--danger-red);
-            box-shadow: 0 0 10px rgba(255, 51, 85, 0.3);
-        }
-
-        .bomb-btn.selected {
-            background: rgba(0, 0, 0, 0.4) !important;
-            border-color: var(--selection-yellow);
-            box-shadow: 
-                0 0 20px rgba(255, 255, 0, 0.5),
-                inset 0 0 20px rgba(255, 255, 0, 0.2);
-            transform: translateY(-3px) scale(1.05);
-            animation: bombPulse 2s infinite;
-        }
-
-        @keyframes bombPulse {
-            0%, 100% { 
-                box-shadow: 
-                    0 0 20px rgba(255, 255, 0, 0.5),
-                    inset 0 0 20px rgba(255, 255, 0, 0.2); 
-                border-color: var(--selection-yellow); 
-            }
-            50% { 
-                box-shadow: 
-                    0 0 30px rgba(255, 255, 0, 0.7),
-                    inset 0 0 30px rgba(255, 255, 0, 0.3); 
-                border-color: var(--selection-yellow);
-            }
-        }
-
-        /* Timer Display */
-        .timer-display {
-            font-family: var(--font-cyber);
-            color: var(--neon-green);
-            text-align: center;
-            margin: 10px 0;
-            font-size: 0.9rem;
-        }
-
-        /* Free Trial Counter */
-        .trial-counter {
-            text-align: center;
-            color: var(--neon-yellow);
-            font-family: var(--font-cyber);
-            font-size: 0.8rem;
-            margin-top: 10px;
-        }
-
-        /* Responsive Design for iPhone & All Devices */
         @media (max-width: 480px) {
-            .app-container {
-                padding: 10px;
+            .container {
+                padding: 15px;
+                padding-top: 60px;
             }
             
-            .cyber-header h1 {
-                font-size: 1.4rem;
-            }
-            
-            .package-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-            
-            .package-card {
-                min-height: 100px;
-            }
-            
-            .cyber-grid {
-                max-width: 320px;
-                gap: 8px;
-            }
-            
-            .grid-cell {
-                font-size: 1.2rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 8px;
-            }
-            
-            .cyber-buttons {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 8px;
+            .header h1 {
+                font-size: 20px;
             }
             
             .whatsapp-float {
-                bottom: 70px;
-                right: 15px;
                 width: 50px;
                 height: 50px;
-                font-size: 25px;
-            }
-            
-            .back-btn {
-                top: 15px;
-                left: 15px;
-                width: 35px;
-                height: 35px;
-                font-size: 1rem;
-            }
-        }
-
-        @media (min-width: 768px) {
-            .app-container {
-                max-width: 450px;
-            }
-        }
-
-        /* iPhone X/XS/11 Pro/12 Pro */
-        @media only screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) {
-            body {
-                padding-top: env(safe-area-inset-top);
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-            
-            .app-container {
-                padding-top: calc(15px + env(safe-area-inset-top));
-                padding-bottom: calc(15px + env(safe-area-inset-bottom));
-            }
-        }
-
-        /* iPhone 6/7/8/SE */
-        @media only screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) {
-            .cyber-grid {
-                max-width: 300px;
-                gap: 6px;
-            }
-            
-            .grid-cell {
-                font-size: 1.1rem;
-            }
-        }
-
-        /* Android Phones */
-        @media screen and (max-width: 360px) {
-            .cyber-header h1 {
-                font-size: 1.2rem;
-            }
-            
-            .cyber-btn {
-                padding: 15px;
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Tablet Landscape */
-        @media (min-width: 1024px) and (orientation: landscape) {
-            .app-container {
-                max-width: 900px;
-            }
-            
-            .page.active {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-            }
-            
-            .cyber-header {
-                grid-column: 1 / -1;
+                font-size: 24px;
+                bottom: 70px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Back Button -->
+    <div class="back-btn" onclick="goBack()">
+        <i class="fas fa-arrow-left"></i>
+    </div>
+
     <!-- WhatsApp Float -->
-    <a href="https://wa.me/255XXXXXXXXX" class="whatsapp-float" target="_blank">
+    <a href="https://wa.me/255xxxxxxxxx" class="whatsapp-float" target="_blank">
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <!-- Loading Overlay -->
+    <!-- Loading -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="cyber-loader"></div>
-        <div class="loading-text" id="loadingText">INITIALIZING...</div>
+        <div class="loader"></div>
+        <div id="loadingText" style="margin-top: 20px; color: var(--secondary);">Loading...</div>
     </div>
 
-    <!-- Message Box -->
-    <div class="message-box" id="messageBox">
-        <div id="messageContent"></div>
-        <button class="cyber-btn" onclick="closeMessage()" style="margin-top: 20px;">OK</button>
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Main Container -->
+    <div class="container" id="container">
+        <!-- Content loaded dynamically -->
     </div>
 
-    <!-- App Container -->
-    <div class="app-container">
-        
-        <!-- PAGE 1: WELCOME / LOGIN -->
-        <div class="page active" id="pageWelcome">
-            <div class="cyber-header">
-                <h1>STANY MINES PRO 2026</h1>
-                <div class="subtitle">VIP PREDICTOR SYSTEM</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 10px;">
-                    Developed by StanyTz | Wolf's & Monster Team
-                </div>
-            </div>
-
-            <!-- Username Form -->
-            <div class="cyber-section">
-                <div class="section-title">
-                    <i class="fas fa-user"></i> SET USERNAME
-                </div>
-                <input type="text" class="cyber-input" id="usernameInput" 
-                       placeholder="Enter your username" maxlength="20">
-                <button class="cyber-btn success" onclick="setUsername()">
-                    <i class="fas fa-check"></i> SAVE USERNAME
-                </button>
-                <div id="usernameStatus" class="timer-display" style="display: none;"></div>
-            </div>
-
-            <!-- Access Options -->
-            <div class="cyber-section">
-                <div class="section-title">
-                    <i class="fas fa-key"></i> ACCESS OPTIONS
-                </div>
-                
-                <!-- Code Validation -->
-                <div style="margin-bottom: 20px;">
-                    <input type="text" class="cyber-input" id="codeInput" 
-                           placeholder="Enter Premium/Reseller Code">
-                    <button class="cyber-btn" onclick="validateCode()">
-                        <i class="fas fa-unlock"></i> VALIDATE CODE
-                    </button>
-                </div>
-                
-                <div style="text-align: center; margin: 20px 0;">
-                    <div style="color: var(--text-muted); font-size: 0.9rem;">OR</div>
-                </div>
-                
-                <!-- Payment Button -->
-                <button class="cyber-btn success" onclick="showPage('pagePackages')">
-                    <i class="fas fa-shopping-cart"></i> BUY PREMIUM ACCESS
-                </button>
-                
-                <!-- Free Trial Button -->
-                <button class="cyber-btn warning" onclick="useFreeTrial()" id="freeTrialBtn">
-                    <i class="fas fa-gift"></i> FREE TRIAL (2 PREDICTIONS)
-                </button>
-                
-                <!-- Free Trial Info -->
-                <div class="trial-counter" id="trialCounter" style="display: none;">
-                    <i class="fas fa-clock"></i> Next trial resets in: <span id="trialTimer">24:00:00</span>
-                </div>
-            </div>
-
-            <!-- User Info -->
-            <div class="cyber-section" id="userInfoSection" style="display: none;">
-                <div class="section-title">
-                    <i class="fas fa-user-circle"></i> YOUR ACCOUNT
-                </div>
-                <div style="text-align: center;">
-                    <div style="color: var(--neon-green); font-family: var(--font-cyber); font-size: 1.1rem;">
-                        <i class="fas fa-user"></i> <span id="currentUsername"></span>
-                        <span id="userStatusBadge" class="status-badge status-free"></span>
-                    </div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 10px;">
-                        <i class="fas fa-clock"></i> Expires: <span id="userExpiry">Not set</span>
-                    </div>
-                    <button class="cyber-btn danger" onclick="logoutUser()" style="margin-top: 15px; padding: 12px;">
-                        <i class="fas fa-sign-out-alt"></i> LOGOUT
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PAGE 2: PACKAGES -->
-        <div class="page" id="pagePackages">
-            <div class="back-btn" onclick="showPage('pageWelcome')">
-                <i class="fas fa-arrow-left"></i>
-            </div>
-            
-            <div class="cyber-header">
-                <h1>PREMIUM PACKAGES</h1>
-                <div class="subtitle">CHOOSE YOUR PLAN</div>
-            </div>
-
-            <div class="cyber-section">
-                <div class="section-title">
-                    <i class="fas fa-crown"></i> SELECT PACKAGE
-                </div>
-                
-                <div class="package-grid">
-                    <div class="package-card" onclick="selectPackage('week')">
-                        <div class="package-name">WEEKLY</div>
-                        <div class="package-price">3,000 TZS</div>
-                        <div class="package-duration">7 Days Access</div>
-                    </div>
-                    
-                    <div class="package-card" onclick="selectPackage('month')">
-                        <div class="package-name">MONTHLY</div>
-                        <div class="package-price">4,000 TZS</div>
-                        <div class="package-duration">30 Days Access</div>
-                    </div>
-                    
-                    <div class="package-card" onclick="selectPackage('lifetime')">
-                        <div class="package-name">LIFETIME</div>
-                        <div class="package-price">5,000 TZS</div>
-                        <div class="package-duration">Lifetime Access</div>
-                    </div>
-                </div>
-                
-                <div class="section-title" style="margin-top: 30px;">
-                    <i class="fas fa-phone"></i> ENTER PHONE NUMBER
-                </div>
-                <input type="tel" class="cyber-input" id="phoneInput" 
-                       placeholder="06XXXXXXXX or 07XXXXXXXX" maxlength="10">
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 15px;">
-                    Enter your mobile number for payment (Airtel or Tigo)
-                </div>
-                
-                <button class="cyber-btn success" onclick="initiatePayment()" id="payBtn">
-                    <i class="fas fa-lock"></i> PAY NOW VIA USSD
-                </button>
-                
-                <div style="margin-top: 20px; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
-                    <i class="fas fa-info-circle"></i> You will receive a USSD prompt on your phone
-                </div>
-            </div>
-        </div>
-
-        <!-- PAGE 3: PREDICTOR -->
-        <div class="page" id="pagePredictor">
-            <div class="back-btn" onclick="showPage('pageWelcome')">
-                <i class="fas fa-arrow-left"></i>
-            </div>
-            
-            <div class="cyber-header">
-                <h1>STANY MINES PREDICTOR</h1>
-                <div style="font-family: var(--font-cyber); color: var(--neon-green); 
-                            font-size: 0.9rem; margin-top: 5px;">
-                    PLAYER: <span id="playerNameDisplay"></span>
-                    <span id="predictorStatus" class="status-badge status-premium"></span>
-                </div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px;">
-                    <i class="fas fa-clock"></i> EXPIRES: <span id="expiryDisplay"></span>
-                    <span style="margin-left: 15px;"><i class="fas fa-bolt"></i> PREDICTIONS LEFT: <span id="predictionsLeft">∞</span></span>
-                </div>
-            </div>
-
-            <!-- Game Container -->
-            <div id="gameContainer">
-                <!-- Game will be loaded here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase Configuration -->
     <script>
-        // Firebase Configuration (SAME AS 
+        // ==================== FIREBASE CONFIG ====================
         const firebaseConfig = {
-  apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
-  authDomain: "stanybots.firebaseapp.com",
-  projectId: "stanybots",
-  storageBucket: "stanybots.firebasestorage.app",
-  messagingSenderId: "381983533939",
-  appId: "1:381983533939:web:201157399592c6389df306",
-  measurementId: "G-W3C0C280BY"
-};
+            apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
+            authDomain: "stanybots.firebaseapp.com",
+            projectId: "stanybots",
+            storageBucket: "stanybots.firebasestorage.app",
+            messagingSenderId: "381983533939",
+            appId: "1:381983533939:web:201157399592c6389df306",
+            measurementId: "G-W3C0C280BY"
+        };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-    <!-- HarakaPay API Configuration -->
-    <script>
-        const HARAKA_API_KEY = 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae';
-        const HARAKA_BASE_URL = 'https://harakapay.net/api/v1';
-        
-        // Phone validation for 06 or 07 numbers (Tanzania)
-        function validatePhoneNumber(phone) {
-            // Remove any spaces or special characters
-            phone = phone.replace(/\D/g, '');
-            
-            // Check if starts with 06 or 07 and is 10 digits total
-            if (phone.length === 10 && (phone.startsWith('06') || phone.startsWith('07'))) {
-                return phone;
-            }
-            return null;
-        }
-    </script>
+        // ==================== GLOBAL STATE ====================
+        const state = {
+            user: null,
+            userData: null,
+            deviceId: null,
+            currentScreen: 'welcome',
+            selectedPackage: null
+        };
 
-    <!-- Main Application Script -->
-    <script>
-        // Global State
-        let currentUser = null;
-        let userData = null;
-        let selectedPackage = null;
-        let freeTrialsUsed = 0;
-        let trialResetTimer = null;
-
-        // DOM Elements
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const messageBox = document.getElementById('messageBox');
-        const messageContent = document.getElementById('messageContent');
-
-        // Initialize App
-        document.addEventListener('DOMContentLoaded', async function() {
-            showLoading('Loading system...');
-            
-            // Disable right click and copy
-            document.addEventListener('contextmenu', e => {
-                e.preventDefault();
-                showMessage('Right click disabled for security', 'warning');
-            });
-            
-            document.addEventListener('copy', e => {
-                e.preventDefault();
-                showMessage('Copying disabled for security', 'warning');
-            });
-
-            // Check existing session
-            await checkExistingSession();
-            
-            // Update free trial display
-            updateFreeTrialDisplay();
-            
-            // Update user info if logged in
-            if (currentUser && userData) {
-                updateUserInfoDisplay();
-            }
-            
-            hideLoading();
-        });
-
-        // Check Existing Session
-        async function checkExistingSession() {
-            const savedUser = localStorage.getItem('stany_user');
-            const savedData = localStorage.getItem('stany_user_data');
-            
-            if (savedUser && savedData) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                    userData = JSON.parse(savedData);
-                    
-                    // Check if still valid
-                    const now = Date.now();
-                    if (userData.expiry && userData.expiry > now) {
-                        // Valid session - check if user exists in Firebase
-                        try {
-                            const userDoc = await db.collection('users').doc(currentUser.username).get();
-                            if (userDoc.exists) {
-                                // Update local data with Firebase data
-                                const firebaseData = userDoc.data();
-                                userData = { ...userData, ...firebaseData };
-                                localStorage.setItem('stany_user_data', JSON.stringify(userData));
-                                
-                                // Show user info
-                                document.getElementById('userInfoSection').style.display = 'block';
-                                document.getElementById('currentUsername').textContent = currentUser.username;
-                                document.getElementById('userStatusBadge').textContent = userData.status.toUpperCase();
-                                document.getElementById('userStatusBadge').className = `status-badge status-${userData.status}`;
-                                
-                                if (userData.expiry) {
-                                    const expiryDate = new Date(userData.expiry);
-                                    document.getElementById('userExpiry').textContent = 
-                                        expiryDate.toLocaleDateString();
-                                }
-                                
-                                // Show access options based on status
-                                if (userData.status === 'free') {
-                                    document.getElementById('freeTrialBtn').style.display = 'none';
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Firebase user check error:', error);
-                        }
-                    } else {
-                        // Expired - clear local storage
-                        localStorage.removeItem('stany_user');
-                        localStorage.removeItem('stany_user_data');
-                        showMessage('Your session has expired. Please login again.');
-                    }
-                } catch (e) {
-                    localStorage.clear();
-                    showPage('pageWelcome');
-                }
-            } else {
-                showPage('pageWelcome');
-            }
-        }
-
-        // Page Navigation
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            document.getElementById(pageId).classList.add('active');
-            
-            // Special handling for predictor page
-            if (pageId === 'pagePredictor') {
-                loadPredictorGame();
-            }
-        }
-
-        // Loading Functions
-        function showLoading(text = 'Loading...') {
-            document.getElementById('loadingText').textContent = text;
-            loadingOverlay.classList.add('active');
+        // ==================== UTILITY FUNCTIONS ====================
+        function showLoading(message = 'Loading...') {
+            document.getElementById('loadingText').textContent = message;
+            document.getElementById('loadingOverlay').classList.add('active');
         }
 
         function hideLoading() {
-            loadingOverlay.classList.remove('active');
+            document.getElementById('loadingOverlay').classList.remove('active');
         }
 
-        // Message Functions
-        function showMessage(message, type = 'info') {
-            messageContent.innerHTML = message;
-            messageBox.classList.add('active');
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.borderLeftColor = 
+                type === 'success' ? '#00ff9d' : 
+                type === 'error' ? '#ff0055' : 
+                type === 'warning' ? '#ffcc00' : '#00f7ff';
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
         }
 
-        function closeMessage() {
-            messageBox.classList.remove('active');
-        }
-
-        // Set Username Function (FIXED - SAVES TO FIREBASE)
-        async function setUsername() {
-            const username = document.getElementById('usernameInput').value.trim();
-            if (!username) {
-                showMessage('Please enter a username');
-                return;
+        function goBack() {
+            const screens = ['welcome', 'username', 'main', 'payment', 'redeem', 'predictor'];
+            const currentIndex = screens.indexOf(state.currentScreen);
+            if (currentIndex > 0) {
+                loadScreen(screens[currentIndex - 1]);
             }
-            
-            if (username.length < 3) {
-                showMessage('Username must be at least 3 characters');
-                return;
-            }
-            
-            showLoading('Saving username...');
-            
-            try {
-                // Check if username already exists in Firebase
-                const userDoc = await db.collection('users').doc(username).get();
-                
-                if (userDoc.exists) {
-                    // Username exists - check if it's the same device
-                    const existingUser = userDoc.data();
-                    const deviceId = generateDeviceId();
-                    
-                    if (existingUser.deviceId !== deviceId) {
-                        showMessage('Username already taken. Please choose another.');
-                        hideLoading();
-                        return;
-                    }
-                    
-                    // Same device - continue
-                    currentUser = {
-                        username: username,
-                        deviceId: deviceId,
-                        joined: Date.now()
-                    };
-                    
-                    userData = existingUser;
-                } else {
-                    // New user - create in Firebase
-                    const deviceId = generateDeviceId();
-                    
-                    currentUser = {
-                        username: username,
-                        deviceId: deviceId,
-                        joined: Date.now()
-                    };
-                    
-                    userData = {
-                        username: username,
-                        deviceId: deviceId,
-                        status: 'pending',
-                        joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    
-                    // Save to Firebase
-                    await db.collection('users').doc(username).set(userData);
-                }
-                
-                // Save locally
-                localStorage.setItem('stany_user', JSON.stringify(currentUser));
-                localStorage.setItem('stany_user_data', JSON.stringify(userData));
-                
-                // Update UI
-                document.getElementById('usernameStatus').textContent = `Username saved: ${username}`;
-                document.getElementById('usernameStatus').style.display = 'block';
-                document.getElementById('usernameInput').value = '';
-                
-                // Show user info section
-                document.getElementById('userInfoSection').style.display = 'block';
-                document.getElementById('currentUsername').textContent = username;
-                document.getElementById('userStatusBadge').textContent = 'PENDING';
-                
-                showMessage(`Username set to: ${username}. Now choose an access method.`, 'success');
-                
-            } catch (error) {
-                console.error('Error setting username:', error);
-                showMessage('Error saving username. Please try again.', 'error');
-            }
-            
-            hideLoading();
         }
 
-        // Generate Device ID
-        function generateDeviceId() {
+        // ==================== DEVICE MANAGEMENT ====================
+        function getDeviceId() {
             let deviceId = localStorage.getItem('device_id');
             if (!deviceId) {
-                deviceId = 'DEV_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 localStorage.setItem('device_id', deviceId);
             }
+            state.deviceId = deviceId;
             return deviceId;
         }
 
-        // Update User Info Display
-        function updateUserInfoDisplay() {
-            if (!currentUser || !userData) return;
-            
-            document.getElementById('userInfoSection').style.display = 'block';
-            document.getElementById('currentUsername').textContent = currentUser.username;
-            
-            const statusBadge = document.getElementById('userStatusBadge');
-            statusBadge.textContent = userData.status ? userData.status.toUpperCase() : 'PENDING';
-            
-            if (userData.status === 'free') {
-                statusBadge.className = 'status-badge status-free';
-            } else if (userData.status === 'premium') {
-                statusBadge.className = 'status-badge status-premium';
-            } else if (userData.status === 'reseller') {
-                statusBadge.className = 'status-badge status-reseller';
-            } else {
-                statusBadge.style.background = 'var(--glass-border)';
-            }
-            
-            if (userData.expiry) {
-                const expiryDate = new Date(userData.expiry);
-                document.getElementById('userExpiry').textContent = expiryDate.toLocaleDateString();
-            }
-        }
-
-        // Free Trial Function
-        async function useFreeTrial() {
-            if (!currentUser || !currentUser.username) {
-                showMessage('Please set username first');
-                return;
-            }
-            
-            // Check free trial limit
-            const trialData = JSON.parse(localStorage.getItem('free_trial_data') || '{"used": 0, "lastUsed": 0}');
-            freeTrialsUsed = trialData.used || 0;
-            
-            if (freeTrialsUsed >= 2) {
-                // Check if 24 hours have passed
-                const now = Date.now();
-                const hoursPassed = (now - trialData.lastUsed) / (1000 * 60 * 60);
+        // ==================== DATABASE AUTO-CREATION ====================
+        async function autoCreateUser(userId) {
+            try {
+                const userRef = db.collection('users').doc(userId);
+                const userDoc = await userRef.get();
                 
-                if (hoursPassed < 24) {
-                    const hoursLeft = 24 - hoursPassed;
-                    showMessage(`Free trials reset in ${Math.ceil(hoursLeft)} hours. Please wait or buy premium.`, 'warning');
-                    return;
-                } else {
-                    // Reset counter
-                    freeTrialsUsed = 0;
+                if (!userDoc.exists) {
+                    await userRef.set({
+                        username: '',
+                        packageType: 'free',
+                        freeTrialsUsed: 0,
+                        lastTrialDate: null,
+                        deviceId: state.deviceId,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        isActive: true,
+                        totalPredictions: 0
+                    });
+                    console.log('User document auto-created');
                 }
+            } catch (error) {
+                console.error('Error auto-creating user:', error);
             }
-            
-            // Grant free trial
-            freeTrialsUsed++;
-            
-            const trialExpiry = Date.now() + (2 * 60 * 60 * 1000); // 2 hours for 2 predictions
-            
-            userData = {
-                username: currentUser.username,
-                deviceId: currentUser.deviceId,
-                status: 'free',
-                expiry: trialExpiry,
-                predictionsLeft: 2,
-                usedPredictions: 0,
-                lastActive: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            // Save to Firebase
-            await db.collection('users').doc(currentUser.username).set(userData, { merge: true });
-            
-            // Save locally
-            localStorage.setItem('stany_user_data', JSON.stringify(userData));
-            localStorage.setItem('free_trial_data', JSON.stringify({
-                used: freeTrialsUsed,
-                lastUsed: Date.now()
-            }));
-            
-            // Update UI
-            updateFreeTrialDisplay();
-            updateUserInfoDisplay();
-            
-            // Load predictor
-            await loadPredictorGame();
-            showPage('pagePredictor');
-            
-            showMessage('Free trial activated! You have 2 predictions.', 'success');
         }
 
-        // Update Free Trial Display
-        function updateFreeTrialDisplay() {
-            const trialData = JSON.parse(localStorage.getItem('free_trial_data') || '{"used": 0, "lastUsed": 0}');
-            freeTrialsUsed = trialData.used || 0;
-            const remaining = 2 - freeTrialsUsed;
+        async function autoCreatePayment(paymentData) {
+            try {
+                await db.collection('payments').add({
+                    ...paymentData,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('Payment document auto-created');
+            } catch (error) {
+                console.error('Error auto-creating payment:', error);
+            }
+        }
+
+        // ==================== AUTHENTICATION ====================
+        async function initializeAuth() {
+            showLoading('Initializing...');
             
-            if (freeTrialsUsed >= 2) {
-                const now = Date.now();
-                const hoursPassed = (now - trialData.lastUsed) / (1000 * 60 * 60);
+            // Get device ID
+            getDeviceId();
+            
+            // Listen for auth state
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    state.user = user;
+                    
+                    // Auto-create user document if not exists
+                    await autoCreateUser(user.uid);
+                    
+                    // Load user data
+                    await loadUserData(user.uid);
+                    
+                    // Check screen
+                    if (!state.userData.username) {
+                        loadScreen('username');
+                    } else {
+                        loadScreen('main');
+                    }
+                } else {
+                    // Sign in anonymously
+                    try {
+                        await auth.signInAnonymously();
+                    } catch (error) {
+                        showNotification('Authentication error: ' + error.message, 'error');
+                    }
+                }
+                hideLoading();
+            });
+        }
+
+        async function loadUserData(userId) {
+            try {
+                const userDoc = await db.collection('users').doc(userId).get();
                 
-                if (hoursPassed < 24) {
-                    const hoursLeft = 24 - hoursPassed;
-                    const minutesLeft = Math.ceil((hoursLeft * 60) % 60);
-                    const secondsLeft = Math.ceil((hoursLeft * 3600) % 60);
+                if (userDoc.exists) {
+                    state.userData = userDoc.data();
                     
-                    document.getElementById('trialCounter').style.display = 'block';
-                    document.getElementById('trialTimer').textContent = 
-                        `${Math.floor(hoursLeft)}:${minutesLeft.toString().padStart(2, '0')}:${secondsLeft.toString().padStart(2, '0')}`;
-                    
-                    document.getElementById('freeTrialBtn').innerHTML = 
-                        `<i class="fas fa-clock"></i> FREE TRIAL (RESET IN ${Math.ceil(hoursLeft)}H)`;
-                    document.getElementById('freeTrialBtn').disabled = true;
-                    
-                    // Update timer every second
-                    if (trialResetTimer) clearInterval(trialResetTimer);
-                    trialResetTimer = setInterval(updateFreeTrialDisplay, 1000);
-                } else {
-                    // Reset available
-                    document.getElementById('trialCounter').style.display = 'none';
-                    document.getElementById('freeTrialBtn').innerHTML = 
-                        `<i class="fas fa-gift"></i> FREE TRIAL (${remaining}/2 LEFT)`;
-                    document.getElementById('freeTrialBtn').disabled = false;
+                    // Check package expiry
+                    if (state.userData.packageExpiry) {
+                        const expiry = state.userData.packageExpiry.toDate();
+                        if (expiry < new Date()) {
+                            // Package expired
+                            await db.collection('users').doc(userId).update({
+                                packageType: 'free',
+                                packageExpiry: null
+                            });
+                            state.userData.packageType = 'free';
+                        }
+                    }
                 }
-            } else {
-                document.getElementById('trialCounter').style.display = 'none';
-                document.getElementById('freeTrialBtn').innerHTML = 
-                    `<i class="fas fa-gift"></i> FREE TRIAL (${remaining}/2 LEFT)`;
-                document.getElementById('freeTrialBtn').disabled = false;
+            } catch (error) {
+                console.error('Error loading user data:', error);
             }
         }
 
-        // Code Validation
-        async function validateCode() {
-            if (!currentUser || !currentUser.username) {
-                showMessage('Please set username first');
+        // ==================== SCREEN MANAGEMENT ====================
+        function loadScreen(screenName) {
+            state.currentScreen = screenName;
+            const container = document.getElementById('container');
+            
+            switch(screenName) {
+                case 'welcome':
+                    container.innerHTML = getWelcomeScreen();
+                    break;
+                case 'username':
+                    container.innerHTML = getUsernameScreen();
+                    break;
+                case 'main':
+                    container.innerHTML = getMainScreen();
+                    break;
+                case 'payment':
+                    container.innerHTML = getPaymentScreen();
+                    break;
+                case 'redeem':
+                    container.innerHTML = getRedeemScreen();
+                    break;
+                case 'predictor':
+                    container.innerHTML = getPredictorScreen();
+                    break;
+            }
+        }
+
+        // ==================== SCREEN TEMPLATES ====================
+        function getWelcomeScreen() {
+            return `
+                <div class="header">
+                    <h1><i class="fas fa-gem"></i> MINES PREDICTOR PRO</h1>
+                    <div style="color: #8a9bbd; font-size: 14px;">Advanced Prediction System</div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-star"></i> WELCOME
+                    </div>
+                    <p style="margin-bottom: 20px; line-height: 1.6;">
+                        Professional mines predictor with high accuracy.
+                        Get safe predictions and maximize your wins.
+                    </p>
+                    
+                    <button class="btn btn-primary" onclick="startFreeTrial()">
+                        <i class="fas fa-play"></i> START FREE TRIAL
+                    </button>
+                    
+                    <button class="btn btn-success" onclick="loadScreen('redeem')">
+                        <i class="fas fa-gift"></i> REDEEM CODE
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-crown"></i> PREMIUM PACKAGES
+                    </div>
+                    
+                    <div class="package-grid">
+                        <div class="package-card" onclick="selectPackage('week')" 
+                             style="border-color: var(--success);">
+                            <div style="text-align: center;">
+                                <i class="fas fa-calendar-week" style="font-size: 30px; color: var(--success);"></i>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--success); margin: 10px 0;">
+                                    3,000 TZS
+                                </div>
+                                <div>7 DAYS ACCESS</div>
+                            </div>
+                        </div>
+                        
+                        <div class="package-card" onclick="selectPackage('month')"
+                             style="border-color: var(--secondary);">
+                            <div style="text-align: center;">
+                                <i class="fas fa-calendar-alt" style="font-size: 30px; color: var(--secondary);"></i>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--secondary); margin: 10px 0;">
+                                    4,000 TZS
+                                </div>
+                                <div>30 DAYS ACCESS</div>
+                            </div>
+                        </div>
+                        
+                        <div class="package-card" onclick="selectPackage('lifetime')"
+                             style="border-color: var(--accent);">
+                            <div style="text-align: center;">
+                                <i class="fas fa-infinity" style="font-size: 30px; color: var(--accent);"></i>
+                                <div style="font-size: 24px; font-weight: bold; color: var(--accent); margin: 10px 0;">
+                                    5,000 TZS
+                                </div>
+                                <div>LIFETIME ACCESS</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="loadScreen('payment')">
+                        <i class="fas fa-shopping-cart"></i> BUY PREMIUM
+                    </button>
+                </div>
+                
+                <div class="card" style="background: rgba(255,0,85,0.1);">
+                    <p style="color: var(--danger);">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>FREE TRIAL:</strong> 2 predictions per 24 hours
+                    </p>
+                </div>
+            `;
+        }
+
+        function getUsernameScreen() {
+            return `
+                <div class="header">
+                    <h1><i class="fas fa-user"></i> SET USERNAME</h1>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-id-card"></i> CHOOSE USERNAME
+                    </div>
+                    
+                    <input type="text" id="usernameInput" class="input-control" 
+                           placeholder="Enter your username" maxlength="20">
+                    
+                    <p style="color: #8a9bbd; font-size: 14px; margin-bottom: 20px;">
+                        This username will be visible to admin.
+                    </p>
+                    
+                    <button class="btn btn-success" onclick="saveUsername()">
+                        <i class="fas fa-check"></i> SAVE USERNAME
+                    </button>
+                </div>
+            `;
+        }
+
+        async function saveUsername() {
+            const username = document.getElementById('usernameInput').value.trim();
+            
+            if (!username || username.length < 3) {
+                showNotification('Username must be at least 3 characters', 'error');
                 return;
             }
-            
-            const code = document.getElementById('codeInput').value.trim().toUpperCase();
-            if (!code) {
-                showMessage('Please enter a code');
-                return;
-            }
-            
-            showLoading('Validating code...');
             
             try {
-                // Check in Firestore
-                const codeRef = db.collection('codes').doc(code);
-                const doc = await codeRef.get();
+                showLoading('Saving username...');
                 
-                if (!doc.exists) {
-                    showMessage('Invalid code');
-                    hideLoading();
+                // Check if username exists
+                const snapshot = await db.collection('users')
+                    .where('username', '==', username)
+                    .get();
+                
+                if (!snapshot.empty) {
+                    showNotification('Username already taken', 'error');
                     return;
                 }
                 
-                const codeData = doc.data();
-                
-                // Check if code is used
-                if (codeData.used) {
-                    showMessage('Code already used');
-                    hideLoading();
-                    return;
-                }
-                
-                // Check if expired
-                if (codeData.expiry && codeData.expiry < Date.now()) {
-                    showMessage('Code has expired');
-                    hideLoading();
-                    return;
-                }
-                
-                // Check device lock
-                if (codeData.deviceLock && codeData.usedByDevice === currentUser.deviceId) {
-                    showMessage('Code already used on this device');
-                    hideLoading();
-                    return;
-                }
-                
-                // Mark code as used
-                await codeRef.update({
-                    used: true,
-                    usedBy: currentUser.username,
-                    usedByDevice: currentUser.deviceId,
-                    usedAt: firebase.firestore.FieldValue.serverTimestamp()
+                // Update user
+                await db.collection('users').doc(state.user.uid).update({
+                    username: username,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                // Calculate expiry based on code type
-                let expiry = Date.now();
-                let status = 'premium';
-                
-                if (codeData.type === 'premium') {
-                    if (codeData.duration === 'week') expiry += 7 * 24 * 60 * 60 * 1000;
-                    else if (codeData.duration === 'month') expiry += 30 * 24 * 60 * 60 * 1000;
-                    else if (codeData.duration === 'lifetime') expiry += 100 * 365 * 24 * 60 * 60 * 1000;
-                } else if (codeData.type === 'reseller') {
-                    status = 'reseller';
-                    expiry = codeData.expiry;
-                }
-                
-                // Update user data
-                userData = {
-                    username: currentUser.username,
-                    deviceId: currentUser.deviceId,
-                    status: status,
-                    expiry: expiry,
-                    codeUsed: code,
-                    predictionsLeft: 999, // Unlimited
-                    usedPredictions: 0,
-                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                
-                if (codeData.type === 'reseller') {
-                    userData.resellerCode = code;
-                    userData.maxCodes = codeData.maxCodes || 10;
-                    userData.generatedCodes = 0;
-                }
-                
-                // Save to Firebase
-                await db.collection('users').doc(currentUser.username).set(userData, { merge: true });
-                
-                // Save locally
-                localStorage.setItem('stany_user_data', JSON.stringify(userData));
-                
-                // Clear code input
-                document.getElementById('codeInput').value = '';
-                
-                // Load predictor
-                await loadPredictorGame();
-                showPage('pagePredictor');
-                
-                showMessage(`Code validated! ${codeData.type.toUpperCase()} access granted.`, 'success');
+                state.userData.username = username;
+                loadScreen('main');
+                showNotification('Username saved successfully', 'success');
                 
             } catch (error) {
-                console.error('Validation error:', error);
-                showMessage('Error validating code. Please try again.', 'error');
+                showNotification('Error saving username', 'error');
+            } finally {
+                hideLoading();
             }
-            
-            hideLoading();
         }
 
-        // Package Selection
-        function selectPackage(pkg) {
-            selectedPackage = pkg;
-            document.querySelectorAll('.package-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            event.currentTarget.classList.add('selected');
+        function getMainScreen() {
+            const isPremium = state.userData.packageType !== 'free';
+            const trialsLeft = Math.max(0, 2 - (state.userData.freeTrialsUsed || 0));
+            
+            return `
+                <div class="header">
+                    <h1><i class="fas fa-user"></i> ${state.userData.username.toUpperCase()}</h1>
+                    <div style="color: ${isPremium ? 'var(--success)' : 'var(--danger)'};">
+                        STATUS: ${isPremium ? 'PREMIUM' : 'FREE TRIAL'}
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-chart-line"></i> ACCOUNT SUMMARY
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                            <div style="font-size: 12px; color: #8a9bbd;">PACKAGE</div>
+                            <div style="font-size: 18px; font-weight: bold; color: ${isPremium ? 'var(--success)' : 'var(--danger)'}">
+                                ${state.userData.packageType.toUpperCase()}
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px;">
+                            <div style="font-size: 12px; color: #8a9bbd;">TRIALS LEFT</div>
+                            <div style="font-size: 18px; font-weight: bold; color: var(--secondary)">
+                                ${isPremium ? '∞' : trialsLeft}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${!isPremium ? `
+                        <div style="padding: 15px; background: rgba(255,0,85,0.1); border-radius: 10px; margin-bottom: 20px;">
+                            <p style="color: var(--danger);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Free trial limit: ${state.userData.freeTrialsUsed || 0}/2 used today
+                            </p>
+                        </div>
+                    ` : ''}
+                    
+                    <button class="btn btn-primary" onclick="startPredictor()" 
+                            ${!isPremium && trialsLeft === 0 ? 'disabled style="opacity:0.5"' : ''}>
+                        <i class="fas fa-rocket"></i> START PREDICTOR
+                    </button>
+                    
+                    ${!isPremium ? `
+                        <button class="btn btn-success" onclick="loadScreen('redeem')">
+                            <i class="fas fa-gift"></i> REDEEM CODE
+                        </button>
+                        
+                        <button class="btn btn-warning" onclick="loadScreen('payment')">
+                            <i class="fas fa-shopping-cart"></i> BUY PREMIUM
+                        </button>
+                    ` : ''}
+                </div>
+            `;
         }
 
-        // Initiate Payment (USING REAL HARAKAPAY DOCUMENTATION)
-        async function initiatePayment() {
-            if (!currentUser || !currentUser.username) {
-                showMessage('Please set username first');
-                return;
-            }
+        function getPaymentScreen() {
+            if (!state.selectedPackage) state.selectedPackage = 'week';
             
-            if (!selectedPackage) {
-                showMessage('Please select a package');
-                return;
-            }
-            
-            const phoneInput = document.getElementById('phoneInput').value.trim();
-            const validatedPhone = validatePhoneNumber(phoneInput);
-            
-            if (!validatedPhone) {
-                showMessage('Please enter valid phone number (06XXXXXXXX or 07XXXXXXXX)');
-                return;
-            }
-            
-            const amounts = {
+            const prices = {
                 week: 3000,
                 month: 4000,
                 lifetime: 5000
             };
             
-            const amount = amounts[selectedPackage];
+            return `
+                <div class="header">
+                    <h1><i class="fas fa-credit-card"></i> MAKE PAYMENT</h1>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-shopping-cart"></i> PAYMENT DETAILS
+                    </div>
+                    
+                    <div style="text-align: center; padding: 20px; border: 2px solid var(--secondary); border-radius: 10px; margin-bottom: 20px;">
+                        <div style="font-size: 32px; font-weight: bold; color: var(--secondary);">
+                            ${prices[state.selectedPackage].toLocaleString()} TZS
+                        </div>
+                        <div style="color: #8a9bbd;">${state.selectedPackage.toUpperCase()} PACKAGE</div>
+                    </div>
+                    
+                    <div>
+                        <div style="color: var(--secondary); margin-bottom: 5px;">Phone Number</div>
+                        <input type="tel" id="phoneNumber" class="input-control" 
+                               placeholder="06xxxxxxx or 07xxxxxxx" pattern="[0-9]{9}">
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="processPayment()">
+                        <i class="fas fa-lock"></i> PAY NOW
+                    </button>
+                    
+                    <button class="btn btn-primary" onclick="loadScreen('main')" style="margin-top: 10px;">
+                        <i class="fas fa-arrow-left"></i> BACK
+                    </button>
+                </div>
+            `;
+        }
+
+        // ==================== PAYMENT PROCESSING ====================
+        const HARAKA_API_KEY = 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae';
+        const HARAKA_BASE_URL = 'https://harakapay.net/api/v1';
+
+        async function processPayment() {
+            const phoneInput = document.getElementById('phoneNumber');
+            let phone = phoneInput.value.trim().replace(/\D/g, '');
             
-            showLoading('Initiating payment...');
+            if (!phone || !(phone.startsWith('06') || phone.startsWith('07')) || phone.length !== 9) {
+                showNotification('Enter valid phone (06xxxxxxx or 07xxxxxxx)', 'error');
+                return;
+            }
+            
+            const pkg = state.selectedPackage;
+            const amount = pkg === 'week' ? 3000 : pkg === 'month' ? 4000 : 5000;
+            const formattedPhone = '255' + phone.substring(1);
             
             try {
-                // Call HarakaPay API - COLLECT PAYMENT
+                showLoading('Processing payment...');
+                
+                // Call HarakaPay API
                 const response = await fetch(`${HARAKA_BASE_URL}/collect`, {
                     method: 'POST',
                     headers: {
@@ -1481,531 +783,294 @@ const analytics = getAnalytics(app);
                         'X-API-Key': HARAKA_API_KEY
                     },
                     body: JSON.stringify({
-                        phone: validatedPhone,
+                        phone: formattedPhone,
                         amount: amount,
-                        description: `Stany Mines ${selectedPackage} package`
+                        description: `Mines Predictor ${pkg} Package`
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    const orderId = result.order_id;
-                    
-                    // Show payment pending message
-                    showMessage(`USSD push sent to ${validatedPhone}. Please complete payment on your phone.`, 'info');
-                    
-                    // Start polling for payment status
-                    await pollPaymentStatus(orderId, amount, selectedPackage, validatedPhone);
-                } else {
-                    throw new Error(result.message || 'Payment initiation failed');
-                }
-                
-            } catch (error) {
-                console.error('Payment error:', error);
-                showMessage('Payment failed: ' + error.message, 'error');
-                hideLoading();
-            }
-        }
-
-        // Poll Payment Status
-        async function pollPaymentStatus(orderId, amount, packageType, phone) {
-            let attempts = 0;
-            const maxAttempts = 60; // 2 minutes (60 * 2 seconds)
-            
-            const poll = async () => {
-                attempts++;
-                
-                try {
-                    // CHECK PAYMENT STATUS
-                    const response = await fetch(`${HARAKA_BASE_URL}/status/${orderId}`, {
-                        headers: {
-                            'X-API-Key': HARAKA_API_KEY
-                        }
+                    // Auto-create payment document
+                    await autoCreatePayment({
+                        userId: state.user.uid,
+                        username: state.userData.username,
+                        phone: phone,
+                        formattedPhone: formattedPhone,
+                        amount: amount,
+                        package: pkg,
+                        orderId: result.order_id,
+                        status: 'pending',
+                        fee: result.fee || 0,
+                        netAmount: result.net_amount || amount
                     });
                     
-                    const result = await response.json();
+                    // Start checking status
+                    checkPaymentStatus(result.order_id, pkg);
                     
-                    if (result.success && result.payment && result.payment.status === 'completed') {
-                        // Payment successful
-                        await grantPremiumAccess(orderId, amount, packageType, phone, result.payment);
-                        return true;
-                    } else if (attempts >= maxAttempts) {
-                        throw new Error('Payment timeout. Please try again.');
-                    } else {
-                        // Continue polling every 2 seconds
-                        setTimeout(poll, 2000);
-                    }
-                } catch (error) {
-                    showMessage('Payment check failed: ' + error.message, 'error');
-                    hideLoading();
+                } else {
+                    throw new Error(result.message || 'Payment failed');
                 }
-            };
-            
-            poll();
-        }
-
-        // Grant Premium Access
-        async function grantPremiumAccess(orderId, amount, packageType, phone, paymentData) {
-            try {
-                // Calculate expiry
-                let expiry = Date.now();
-                if (packageType === 'week') expiry += 7 * 24 * 60 * 60 * 1000;
-                else if (packageType === 'month') expiry += 30 * 24 * 60 * 60 * 1000;
-                else if (packageType === 'lifetime') expiry += 100 * 365 * 24 * 60 * 60 * 1000;
-                
-                // Save payment record to Firestore
-                await db.collection('payments').add({
-                    username: currentUser.username,
-                    deviceId: currentUser.deviceId,
-                    orderId: orderId,
-                    amount: amount,
-                    net_amount: paymentData.net_amount || amount,
-                    fee: paymentData.fee_amount || 0,
-                    package: packageType,
-                    phone: phone,
-                    status: 'completed',
-                    created_at: paymentData.created_at || new Date().toISOString(),
-                    completed_at: paymentData.completed_at || new Date().toISOString(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Update user data
-                userData = {
-                    username: currentUser.username,
-                    deviceId: currentUser.deviceId,
-                    status: 'premium',
-                    expiry: expiry,
-                    package: packageType,
-                    paymentId: orderId,
-                    predictionsLeft: 999, // Unlimited
-                    usedPredictions: 0,
-                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                
-                // Save user to Firestore
-                await db.collection('users').doc(currentUser.username).set(userData, { merge: true });
-                
-                // Save locally
-                localStorage.setItem('stany_user_data', JSON.stringify(userData));
-                
-                // Clear phone input
-                document.getElementById('phoneInput').value = '';
-                
-                hideLoading();
-                
-                // Load predictor
-                await loadPredictorGame();
-                showPage('pagePredictor');
-                
-                showMessage('Payment successful! Premium access granted.', 'success');
                 
             } catch (error) {
-                console.error('Grant access error:', error);
-                showMessage('Error granting access. Please contact support.', 'error');
                 hideLoading();
+                showNotification('Payment error: ' + error.message, 'error');
             }
         }
 
-        // Load Predictor Game
-        async function loadPredictorGame() {
-            if (!userData) {
-                showMessage('Please login first');
-                showPage('pageWelcome');
+        async function checkPaymentStatus(orderId, packageType) {
+            try {
+                const response = await fetch(`${HARAKA_BASE_URL}/status/${orderId}`, {
+                    headers: { 'X-API-Key': HARAKA_API_KEY }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.payment.status === 'completed') {
+                    // Payment successful
+                    hideLoading();
+                    
+                    // Calculate expiry
+                    const expiry = new Date();
+                    const days = packageType === 'week' ? 7 : packageType === 'month' ? 30 : 9999;
+                    expiry.setDate(expiry.getDate() + days);
+                    
+                    // Update user
+                    await db.collection('users').doc(state.user.uid).update({
+                        packageType: packageType,
+                        packageExpiry: expiry,
+                        freeTrialsUsed: 0,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    // Update payment
+                    const snapshot = await db.collection('payments')
+                        .where('orderId', '==', orderId)
+                        .get();
+                    
+                    if (!snapshot.empty) {
+                        await snapshot.docs[0].ref.update({
+                            status: 'completed',
+                            completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    
+                    // Reload user data
+                    await loadUserData(state.user.uid);
+                    
+                    showNotification('Payment successful! Premium activated.', 'success');
+                    loadScreen('main');
+                    
+                } else if (result.success && result.payment.status === 'pending') {
+                    setTimeout(() => checkPaymentStatus(orderId, packageType), 5000);
+                } else {
+                    throw new Error('Payment failed');
+                }
+                
+            } catch (error) {
+                hideLoading();
+                showNotification('Payment status check failed', 'error');
+            }
+        }
+
+        // ==================== FREE TRIAL ====================
+        async function startFreeTrial() {
+            if (!state.userData.username) {
+                loadScreen('username');
                 return;
             }
             
-            // Check if expired
-            if (userData.expiry && userData.expiry < Date.now()) {
-                showMessage('Your access has expired. Please renew.', 'warning');
-                showPage('pageWelcome');
+            const now = new Date();
+            const lastTrial = state.userData.lastTrialDate ? 
+                state.userData.lastTrialDate.toDate() : null;
+            
+            // Reset if 24 hours passed
+            if (lastTrial && (now - lastTrial) >= 24 * 60 * 60 * 1000) {
+                state.userData.freeTrialsUsed = 0;
+                await db.collection('users').doc(state.user.uid).update({
+                    freeTrialsUsed: 0
+                });
+            }
+            
+            if (state.userData.freeTrialsUsed >= 2) {
+                showNotification('Free trial limit reached. Buy premium or try tomorrow.', 'error');
                 return;
             }
             
-            // Update predictor display
-            document.getElementById('playerNameDisplay').textContent = currentUser.username;
+            // Increment trial count
+            state.userData.freeTrialsUsed = (state.userData.freeTrialsUsed || 0) + 1;
+            await db.collection('users').doc(state.user.uid).update({
+                freeTrialsUsed: state.userData.freeTrialsUsed,
+                lastTrialDate: firebase.firestore.FieldValue.serverTimestamp()
+            });
             
-            const statusBadge = document.getElementById('predictorStatus');
-            if (userData.status === 'free') {
-                statusBadge.textContent = 'FREE TRIAL';
-                statusBadge.className = 'status-badge status-free';
-                document.getElementById('predictionsLeft').textContent = 
-                    (userData.predictionsLeft || 2) - (userData.usedPredictions || 0);
-            } else if (userData.status === 'premium') {
-                statusBadge.textContent = 'PREMIUM';
-                statusBadge.className = 'status-badge status-premium';
-                document.getElementById('predictionsLeft').textContent = '∞';
-            } else if (userData.status === 'reseller') {
-                statusBadge.textContent = 'RESELLER';
-                statusBadge.className = 'status-badge status-reseller';
-                document.getElementById('predictionsLeft').textContent = '∞';
-            }
-            
-            if (userData.expiry) {
-                const expiryDate = new Date(userData.expiry);
-                document.getElementById('expiryDisplay').textContent = 
-                    expiryDate.toLocaleDateString() + ' ' + expiryDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            }
-            
-            // Load the game
-            const gameContainer = document.getElementById('gameContainer');
-            
-            gameContainer.innerHTML = `
-                <div class="cyber-section">
-                    <div class="section-title">
-                        <i class="fas fa-bomb"></i> BOMB CONFIGURATION
-                    </div>
-                    <div class="cyber-buttons" id="bombSelection">
-                        <button class="bomb-btn safe-bomb" onclick="selectBombs(2)">2 BOMBS</button>
-                        <button class="bomb-btn safe-bomb" onclick="selectBombs(3)">3 BOMBS</button>
-                        <button class="bomb-btn high-risk" onclick="selectBombs(5)">5 BOMBS</button>
-                        <button class="bomb-btn high-risk" onclick="selectBombs(7)">7 BOMBS</button>
-                    </div>
-                </div>
+            // Start predictor
+            startPredictor();
+        }
 
-                <div class="cyber-section">
-                    <div class="cyber-grid" id="gameGrid">
-                        ${Array(25).fill().map((_, i) => 
-                            `<div class="grid-cell" onclick="revealCell(${i})" data-index="${i}">?</div>`
-                        ).join('')}
-                    </div>
+        // ==================== CODE REDEMPTION ====================
+        function getRedeemScreen() {
+            return `
+                <div class="header">
+                    <h1><i class="fas fa-gift"></i> REDEEM CODE</h1>
                 </div>
-
-                <div class="cyber-section">
-                    <div class="section-title">
-                        <i class="fas fa-brain"></i> PREDICTION ANALYSIS
-                    </div>
-                    <div id="predictionDisplay" style="color: var(--neon-green); padding: 10px; min-height: 80px;">
-                        Select bomb count and start prediction
+                
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-key"></i> ENTER PREMIUM CODE
                     </div>
                     
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value" id="safeCount">?</div>
-                            <div class="stat-label">SAFE CELLS</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="bombCount">2</div>
-                            <div class="stat-label">BOMBS</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="accuracy">?</div>
-                            <div class="stat-label">ACCURACY</div>
-                        </div>
-                    </div>
+                    <input type="text" id="premiumCode" class="input-control" 
+                           placeholder="Enter premium code" style="text-transform: uppercase;">
                     
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-                        <button class="cyber-btn success" onclick="startPrediction()" id="startBtn">
-                            <i class="fas fa-play"></i> START
-                        </button>
-                        <button class="cyber-btn danger" onclick="resetGame()">
-                            <i class="fas fa-redo"></i> RESET
-                        </button>
-                    </div>
+                    <p style="color: #8a9bbd; font-size: 14px; margin-bottom: 20px;">
+                        Enter the premium code you purchased.
+                        Code can be used only once per device.
+                    </p>
+                    
+                    <button class="btn btn-success" onclick="redeemCode()">
+                        <i class="fas fa-check"></i> REDEEM CODE
+                    </button>
+                    
+                    <button class="btn btn-primary" onclick="loadScreen('main')" style="margin-top: 10px;">
+                        <i class="fas fa-arrow-left"></i> BACK
+                    </button>
                 </div>
             `;
-            
-            // Initialize game state
-            window.gameState = {
-                active: false,
-                bombs: 2,
-                mines: [],
-                revealed: [],
-                recommendations: [],
-                bestChoices: []
-            };
-            
-            // Initialize bomb selection
-            document.querySelectorAll('#bombSelection .bomb-btn')[0].classList.add('selected');
         }
 
-        // Game Functions
-        function selectBombs(count) {
-            window.gameState.bombs = count;
-            document.querySelectorAll('#bombSelection .bomb-btn').forEach(btn => {
-                btn.classList.remove('selected');
-            });
-            event.currentTarget.classList.add('selected');
-            document.getElementById('bombCount').textContent = count;
-        }
-
-        async function startPrediction() {
-            if (window.gameState.active) {
-                showMessage('Analysis already in progress', 'warning');
+        async function redeemCode() {
+            const code = document.getElementById('premiumCode').value.trim().toUpperCase();
+            
+            if (!code) {
+                showNotification('Please enter a code', 'error');
                 return;
             }
             
-            // Check if user has predictions left
-            if (userData.status === 'free') {
-                const used = userData.usedPredictions || 0;
-                const left = (userData.predictionsLeft || 2) - used;
+            try {
+                showLoading('Validating code...');
                 
-                if (left <= 0) {
-                    showMessage('Free trial completed. Please buy premium.', 'warning');
-                    showPage('pageWelcome');
+                // Check code
+                const snapshot = await db.collection('premium_codes')
+                    .where('code', '==', code)
+                    .where('status', '==', 'active')
+                    .get();
+                
+                if (snapshot.empty) {
+                    throw new Error('Invalid or expired code');
+                }
+                
+                const codeData = snapshot.docs[0].data();
+                const codeId = snapshot.docs[0].id;
+                
+                // Check device lock
+                if (codeData.deviceId && codeData.deviceId !== state.deviceId) {
+                    throw new Error('Code already used on another device');
+                }
+                
+                // Check expiry
+                if (codeData.expiresAt && codeData.expiresAt.toDate() < new Date()) {
+                    throw new Error('Code has expired');
+                }
+                
+                // Update code
+                await db.collection('premium_codes').doc(codeId).update({
+                    status: 'used',
+                    usedBy: state.user.uid,
+                    usedByUsername: state.userData.username,
+                    usedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    deviceId: state.deviceId
+                });
+                
+                // Calculate expiry
+                const expiry = new Date();
+                const duration = codeData.duration || 30;
+                expiry.setDate(expiry.getDate() + duration);
+                
+                // Update user
+                await db.collection('users').doc(state.user.uid).update({
+                    packageType: 'premium',
+                    packageExpiry: expiry,
+                    freeTrialsUsed: 0,
+                    redeemedCode: code,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Reload user data
+                await loadUserData(state.user.uid);
+                
+                hideLoading();
+                showNotification('Code redeemed successfully!', 'success');
+                loadScreen('main');
+                
+            } catch (error) {
+                hideLoading();
+                showNotification('Redemption failed: ' + error.message, 'error');
+            }
+        }
+
+        // ==================== PREDICTOR ====================
+        function startPredictor() {
+            loadScreen('predictor');
+        }
+
+        function getPredictorScreen() {
+            return `
+                <div class="header">
+                    <h1><i class="fas fa-gem"></i> MINES PREDICTOR</h1>
+                    <div style="color: #8a9bbd;">Live Analysis</div>
+                </div>
+                
+                <div class="card">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 14px; color: var(--secondary);">PLAYER</div>
+                        <div style="font-size: 18px; font-weight: bold;">${state.userData.username}</div>
+                    </div>
+                    
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-gem" style="font-size: 60px; color: var(--secondary);"></i>
+                        <div style="margin-top: 20px; color: var(--secondary);">Predictor Loading...</div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="loadScreen('main')">
+                        <i class="fas fa-arrow-left"></i> BACK TO DASHBOARD
+                    </button>
+                </div>
+            `;
+        }
+
+        // ==================== HELPER FUNCTIONS ====================
+        function selectPackage(packageType) {
+            state.selectedPackage = packageType;
+            loadScreen('payment');
+        }
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAuth();
+            
+            // Security - disable right click
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showNotification('Action not allowed', 'error');
+            });
+            
+            // Disable copy but allow paste
+            document.addEventListener('copy', function(e) {
+                e.preventDefault();
+                showNotification('Copying disabled', 'error');
+            });
+            
+            // Allow paste
+            document.addEventListener('paste', function(e) {
+                // Allow paste in input fields
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                     return;
                 }
-            }
-            
-            showLoading('Analyzing patterns...');
-            
-            // Update prediction count
-            if (userData.status === 'free') {
-                userData.usedPredictions = (userData.usedPredictions || 0) + 1;
-                localStorage.setItem('stany_user_data', JSON.stringify(userData));
-                
-                // Update Firebase
-                await db.collection('users').doc(currentUser.username).update({
-                    usedPredictions: firebase.firestore.FieldValue.increment(1),
-                    lastActive: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                // Update display
-                document.getElementById('predictionsLeft').textContent = 
-                    (userData.predictionsLeft || 2) - userData.usedPredictions;
-            }
-            
-            // Reset game state
-            window.gameState.active = true;
-            window.gameState.mines = [];
-            window.gameState.revealed = [];
-            window.gameState.recommendations = [];
-            window.gameState.bestChoices = [];
-            
-            // Generate mines
-            const positions = Array.from({length: 25}, (_, i) => i);
-            for (let i = 0; i < window.gameState.bombs; i++) {
-                const randomIndex = Math.floor(Math.random() * positions.length);
-                window.gameState.mines.push(positions[randomIndex]);
-                positions.splice(randomIndex, 1);
-            }
-            
-            // Generate safe cells to reveal
-            const totalSafe = 25 - window.gameState.bombs;
-            const cellsToReveal = Math.floor(totalSafe * (0.4 + Math.random() * 0.2));
-            
-            for (let i = 0; i < cellsToReveal; i++) {
-                const safePositions = positions.filter(p => !window.gameState.mines.includes(p));
-                if (safePositions.length === 0) break;
-                
-                const randomIndex = Math.floor(Math.random() * safePositions.length);
-                const safeCell = safePositions[randomIndex];
-                window.gameState.revealed.push(safeCell);
-                positions.splice(positions.indexOf(safeCell), 1);
-            }
-            
-            // Calculate recommendations
-            calculateRecommendations();
-            
-            // For high-risk games, only show safest cell
-            if (window.gameState.bombs >= 5) {
-                window.gameState.recommendations = window.gameState.bestChoices.slice(0, 1);
-            }
-            
-            // Update grid
-            updateGameGrid();
-            
-            // Update stats
-            document.getElementById('safeCount').textContent = 25 - window.gameState.bombs;
-            document.getElementById('accuracy').textContent = `${95 + Math.floor(Math.random() * 6)}%`;
-            
-            // Show prediction
-            updatePredictionDisplay();
-            
-            // Record prediction
-            await recordPrediction();
-            
-            hideLoading();
-        }
-
-        function calculateRecommendations() {
-            const allCells = Array.from({length: 25}, (_, i) => i);
-            const unrevealedSafe = allCells.filter(i => 
-                !window.gameState.mines.includes(i) && 
-                !window.gameState.revealed.includes(i)
-            );
-            
-            // Score cells
-            const scores = unrevealedSafe.map(index => {
-                const neighbors = getNeighbors(index);
-                const mineNeighbors = neighbors.filter(n => window.gameState.mines.includes(n));
-                const safeNeighbors = neighbors.filter(n => 
-                    !window.gameState.mines.includes(n) && window.gameState.revealed.includes(n)
-                );
-                
-                let score = 100;
-                score -= mineNeighbors.length * 30;
-                score += safeNeighbors.length * 15;
-                
-                // Corner bonus
-                const row = Math.floor(index / 5);
-                const col = index % 5;
-                if ((row === 0 || row === 4) && (col === 0 || col === 4)) {
-                    score += 10;
-                }
-                
-                return { index, score };
+                e.preventDefault();
+                showNotification('Paste not allowed here', 'error');
             });
-            
-            scores.sort((a, b) => b.score - a.score);
-            
-            // Get recommendations
-            const numRecommendations = Math.min(3, scores.length);
-            window.gameState.recommendations = scores.slice(0, numRecommendations).map(s => s.index);
-            
-            // Get best choice
-            if (scores.length > 0) {
-                window.gameState.bestChoices = [scores[0].index];
-            }
-        }
-
-        function getNeighbors(index) {
-            const neighbors = [];
-            const row = Math.floor(index / 5);
-            const col = index % 5;
-            
-            for (let r = row - 1; r <= row + 1; r++) {
-                for (let c = col - 1; c <= col + 1; c++) {
-                    if (r >= 0 && r < 5 && c >= 0 && c < 5 && !(r === row && c === col)) {
-                        neighbors.push(r * 5 + c);
-                    }
-                }
-            }
-            return neighbors;
-        }
-
-        function updateGameGrid() {
-            const cells = document.querySelectorAll('.grid-cell');
-            cells.forEach((cell, index) => {
-                cell.className = 'grid-cell';
-                cell.textContent = '?';
-                cell.onclick = () => revealCell(index);
-                
-                if (window.gameState.mines.includes(index)) {
-                    cell.classList.add('mine');
-                    cell.textContent = '💣';
-                    cell.onclick = null;
-                } else if (window.gameState.revealed.includes(index)) {
-                    cell.classList.add('safe');
-                    cell.textContent = '💎';
-                    cell.onclick = null;
-                }
-                
-                // Add recommendations
-                if (window.gameState.recommendations.includes(index)) {
-                    cell.classList.add('recommended');
-                }
-                if (window.gameState.bestChoices.includes(index)) {
-                    cell.classList.add('best-choice');
-                }
-            });
-        }
-
-        function revealCell(index) {
-            if (!window.gameState.active) return;
-            
-            const cell = document.querySelectorAll('.grid-cell')[index];
-            
-            if (window.gameState.mines.includes(index)) {
-                cell.classList.add('mine');
-                cell.textContent = '💣';
-                cell.onclick = null;
-                showMessage('BOMB HIT! Game over.', 'error');
-                window.gameState.active = false;
-            } else {
-                cell.classList.add('safe');
-                cell.textContent = '💎';
-                cell.onclick = null;
-                window.gameState.revealed.push(index);
-            }
-        }
-
-        function resetGame() {
-            window.gameState.active = false;
-            window.gameState.mines = [];
-            window.gameState.revealed = [];
-            window.gameState.recommendations = [];
-            window.gameState.bestChoices = [];
-            
-            const cells = document.querySelectorAll('.grid-cell');
-            cells.forEach((cell, index) => {
-                cell.className = 'grid-cell';
-                cell.textContent = '?';
-                cell.onclick = () => revealCell(index);
-            });
-            
-            document.getElementById('predictionDisplay').innerHTML = 'Select bomb count and start prediction';
-            document.getElementById('safeCount').textContent = '?';
-            document.getElementById('accuracy').textContent = '?';
-        }
-
-        function updatePredictionDisplay() {
-            const recNumbers = window.gameState.recommendations.map(i => i + 1);
-            const bestChoice = window.gameState.bestChoices[0] + 1;
-            
-            let prediction = `<span style="color: var(--neon-blue);">ANALYSIS COMPLETE</span><br><br>`;
-            prediction += `<span style="color: var(--neon-green);">SAFE PICKS:</span> ${recNumbers.join(', ')}<br>`;
-            prediction += `<span style="color: var(--neon-yellow); font-weight: bold;">BEST CHOICE:</span> ${bestChoice}<br><br>`;
-            
-            if (window.gameState.bombs >= 5) {
-                prediction += `<span style="color: var(--danger-red);">HIGH RISK WARNING!</span> ${window.gameState.bombs} bombs detected.<br>`;
-                prediction += `Survival chance: <span style="color: var(--danger-red);">${Math.round((25-window.gameState.bombs)/25*100)}%</span>`;
-            } else {
-                prediction += `${window.gameState.mines.length} bombs detected in grid`;
-            }
-            
-            document.getElementById('predictionDisplay').innerHTML = prediction;
-        }
-
-        async function recordPrediction() {
-            try {
-                await db.collection('predictions').add({
-                    username: currentUser.username,
-                    deviceId: currentUser.deviceId,
-                    bombs: window.gameState.bombs,
-                    recommendations: window.gameState.recommendations,
-                    bestChoice: window.gameState.bestChoices[0],
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    userStatus: userData.status
-                });
-            } catch (error) {
-                console.error('Error recording prediction:', error);
-            }
-        }
-
-        // Logout User
-        function logoutUser() {
-            if (confirm('Are you sure you want to logout?')) {
-                // Clear session data
-                localStorage.removeItem('stany_user_data');
-                
-                // Reload page
-                location.reload();
-            }
-        }
-
-        // Session recovery
-        window.addEventListener('beforeunload', function() {
-            if (userData && userData.status !== 'pending') {
-                localStorage.setItem('session_backup', JSON.stringify({
-                    username: currentUser.username,
-                    timestamp: Date.now()
-                }));
-            }
-        });
-
-        // Check session backup on load
-        window.addEventListener('load', function() {
-            const backup = localStorage.getItem('session_backup');
-            if (backup) {
-                const data = JSON.parse(backup);
-                const hoursPassed = (Date.now() - data.timestamp) / (1000 * 60 * 60);
-                
-                if (hoursPassed < 24) {
-                    console.log('Session backup found');
-                }
-                localStorage.removeItem('session_backup');
-            }
         });
     </script>
 </body>
