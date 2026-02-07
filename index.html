@@ -1,32 +1,44 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mines Predictor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;family=Orbitron:wght@400;700;900&amp;display=swap" rel="stylesheet">
+    <title>STANY MINES PREDICTOR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js"></script>
     <style>
         /* === CYBERPUNK THEME === */
-       :root {
-    --bg-color: #0a0e17;
-    --glass: rgba(15, 22, 39, 0.9);
-    --glass-border: rgba(0, 247, 255, 0.2);
-    --neon-blue: #00f7ff;
-    --neon-pink: #ff00ff;
-    --neon-green: #00ff9d;
-    --neon-red: #ff0055;
-    --neon-yellow: #ffcc00;
-    --text: #ffffff;
-    --text-muted: #8a9bbd;
-    --radius: 16px;
-    --font-main: 'Poppins', sans-serif;
-    --font-cyber: 'Orbitron', monospace;
-    
-    /* New color variables for bomb buttons */
-    --safe-green: #00ff88;
-    --danger-red: #ff3355;
-    --warning-orange: #ff9900;
-    --selection-yellow: #ffff00;
-}
+        :root {
+            --bg-color: #0a0e17;
+            --glass: rgba(15, 22, 39, 0.9);
+            --glass-border: rgba(0, 247, 255, 0.2);
+            --neon-blue: #00f7ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff9d;
+            --neon-red: #ff0055;
+            --neon-yellow: #ffcc00;
+            --text: #ffffff;
+            --text-muted: #8a9bbd;
+            --radius: 16px;
+            --font-main: 'Poppins', sans-serif;
+            --font-cyber: 'Orbitron', monospace;
+            --safe-green: #00ff88;
+            --danger-red: #ff3355;
+            --warning-orange: #ff9900;
+            --selection-yellow: #ffff00;
+        }
+
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
 
         body {
             background-color: var(--bg-color);
@@ -34,13 +46,19 @@
                 radial-gradient(circle at 20% 80%, rgba(0, 247, 255, 0.15), transparent 40%),
                 radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.1), transparent 40%),
                 linear-gradient(45deg, rgba(10, 14, 23, 0.9), rgba(20, 25, 40, 0.9));
-            color: var(--text); 
-            font-family: var(--font-main); 
-            margin: 0; 
+            color: var(--text);
+            font-family: var(--font-main);
+            margin: 0;
             padding: 0;
             min-height: 100vh;
             overflow-x: hidden;
             position: relative;
+            cursor: default;
+        }
+
+        /* Disable right-click */
+        body.oncontextmenu {
+            display: none !important;
         }
 
         /* Cyber grid background */
@@ -70,9 +88,17 @@
             margin: 0 auto;
             padding: 15px;
             position: relative;
+            min-height: 100vh;
         }
 
-        /* === CYBER HEADER === */
+        /* === MAIN MENU PAGE === */
+        .main-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding-top: 30px;
+        }
+
         .cyber-header {
             text-align: center;
             margin-bottom: 25px;
@@ -103,7 +129,7 @@
 
         .cyber-header h1 {
             font-family: var(--font-cyber);
-            font-size: 2rem;
+            font-size: 1.8rem;
             margin: 0;
             background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
             -webkit-background-clip: text;
@@ -115,16 +141,135 @@
             text-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
         }
 
-        .cyber-header .subtitle {
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
             font-family: var(--font-cyber);
-            color: var(--neon-green);
-            font-size: 0.9rem;
-            margin-top: 5px;
-            letter-spacing: 1px;
+            font-size: 0.8rem;
+            margin-top: 10px;
         }
 
-        /* === BOMB SELECTION === */
-        .cyber-section {
+        .status-free {
+            background: linear-gradient(45deg, var(--neon-green), #00a86b);
+            color: black;
+            font-weight: bold;
+        }
+
+        .status-premium {
+            background: linear-gradient(45deg, var(--neon-yellow), #ff9900);
+            color: black;
+            font-weight: bold;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .username-display {
+            font-family: var(--font-cyber);
+            color: var(--neon-green);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .edit-username-btn {
+            background: none;
+            border: none;
+            color: var(--neon-blue);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .edit-username-btn:hover {
+            transform: scale(1.2);
+            color: var(--neon-pink);
+        }
+
+        /* === MENU BUTTONS === */
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .cyber-menu-btn {
+            padding: 20px;
+            border-radius: var(--radius);
+            font-family: var(--font-cyber);
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            background: rgba(15, 22, 39, 0.9);
+            border: 2px solid var(--glass-border);
+            color: var(--text);
+        }
+
+        .cyber-menu-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .cyber-menu-btn:hover::before {
+            opacity: 1;
+        }
+
+        .cyber-menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 247, 255, 0.3);
+        }
+
+        .cyber-menu-btn i {
+            font-size: 1.2rem;
+        }
+
+        .btn-free {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+
+        .btn-premium {
+            border-color: var(--neon-yellow);
+            color: var(--neon-yellow);
+        }
+
+        .btn-reseller {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+
+        .btn-whatsapp {
+            border-color: #25D366;
+            color: #25D366;
+        }
+
+        /* === CODE INPUT PAGE === */
+        .code-input-page {
+            display: none;
+        }
+
+        .cyber-card {
             background: rgba(15, 22, 39, 0.9);
             border-radius: var(--radius);
             padding: 25px;
@@ -133,14 +278,6 @@
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(5px);
-        }
-
-        .cyber-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, transparent, rgba(0, 247, 255, 0.1), transparent);
-            z-index: 0;
         }
 
         .section-title {
@@ -165,6 +302,177 @@
             background: linear-gradient(90deg, var(--neon-blue), transparent);
         }
 
+        .code-input-group {
+            margin: 20px 0;
+        }
+
+        .cyber-input {
+            width: 100%;
+            padding: 18px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--neon-blue);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: var(--font-cyber);
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .cyber-input::placeholder {
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .cyber-input:focus {
+            outline: none;
+            box-shadow: 0 0 20px rgba(0, 247, 255, 0.5);
+        }
+
+        .info-text {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+
+        .success-text {
+            color: var(--neon-green);
+            text-align: center;
+            font-family: var(--font-cyber);
+            font-size: 0.9rem;
+            margin: 15px 0;
+            animation: pulse 2s infinite;
+        }
+
+        .error-text {
+            color: var(--neon-red);
+            text-align: center;
+            font-family: var(--font-cyber);
+            font-size: 0.9rem;
+            margin: 15px 0;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* === RESELLER PAGE === */
+        .reseller-codes {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .code-item {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            font-family: var(--font-cyber);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .code-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--neon-pink);
+            box-shadow: 0 5px 15px rgba(255, 0, 255, 0.3);
+        }
+
+        .code-item.used {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: var(--neon-red);
+        }
+
+        .code-item.used::after {
+            content: 'USED';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--neon-red);
+            color: black;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        /* === PAYMENT PAGE === */
+        .payment-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .payment-option {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-option:hover {
+            border-color: var(--neon-green);
+            transform: translateY(-3px);
+        }
+
+        .payment-option.selected {
+            border-color: var(--neon-green);
+            background: rgba(0, 255, 157, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 157, 0.3);
+        }
+
+        .payment-amount {
+            font-family: var(--font-cyber);
+            font-size: 1.5rem;
+            color: var(--neon-green);
+            margin: 10px 0;
+        }
+
+        .payment-duration {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .phone-input-group {
+            margin: 20px 0;
+        }
+
+        /* === PREDICTOR PAGE === */
+        .predictor-page {
+            display: none;
+        }
+
+        .predictor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .predictor-user-info {
+            font-family: var(--font-cyber);
+            color: var(--neon-green);
+            font-size: 0.9rem;
+        }
+
         .cyber-buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -174,91 +482,62 @@
         }
 
         .cyber-btn {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border: 2px solid var(--neon-red);
-    color: white;
-    padding: 18px 5px;
-    border-radius: 12px;
-    font-family: var(--font-cyber);
-    font-weight: 700;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    overflow: hidden;
-    letter-spacing: 1px;
-}
-
-/* Safe bombs (2, 3) - Green outline */
-.cyber-btn.safe-bomb {
-    border-color: var(--safe-green) !important;
-    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3) !important;
-}
-
-/* High risk bombs (5, 6, 7) - Red outline */
-.cyber-btn.high-risk {
-    border-color: var(--danger-red) !important;
-    box-shadow: 0 0 10px rgba(255, 51, 85, 0.3) !important;
-}
-
-.cyber-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-
-.cyber-btn:hover {
-    background: rgba(0, 0, 0, 0.4) !important;
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3) !important;
-}
-
-.cyber-btn:hover::after {
-    opacity: 1;
-}
-
-.cyber-btn.selected {
-    background: rgba(0, 0, 0, 0.4) !important;
-    border-color: var(--selection-yellow) !important;
-    box-shadow: 
-        0 0 20px rgba(255, 255, 0, 0.5),
-        inset 0 0 20px rgba(255, 255, 0, 0.2) !important;
-    transform: translateY(-3px) scale(1.05);
-    animation: bombPulse 2s infinite;
-}
-
-        @keyframes bombPulse {
-    0%, 100% { 
-        box-shadow: 
-            0 0 20px rgba(255, 255, 0, 0.5),
-            inset 0 0 20px rgba(255, 255, 0, 0.2); 
-        border-color: var(--selection-yellow); 
-    }
-    50% { 
-        box-shadow: 
-            0 0 30px rgba(255, 255, 0, 0.7),
-            inset 0 0 30px rgba(255, 255, 0, 0.3); 
-        border-color: var(--selection-yellow);
-    }
-}
-
-        .cyber-btn.selected::after {
-            content: '✓';
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--neon-green);
-            font-weight: bold;
-            font-size: 1rem;
-            text-shadow: 0 0 10px var(--neon-green);
-            opacity: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--neon-red);
+            color: white;
+            padding: 18px 5px;
+            border-radius: 12px;
+            font-family: var(--font-cyber);
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
         }
 
-        /* === GAME GRID === */
+        .cyber-btn.safe-bomb {
+            border-color: var(--safe-green);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        .cyber-btn.high-risk {
+            border-color: var(--danger-red);
+            box-shadow: 0 0 10px rgba(255, 51, 85, 0.3);
+        }
+
+        .cyber-btn:hover {
+            background: rgba(0, 0, 0, 0.4);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
+        }
+
+        .cyber-btn.selected {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: var(--selection-yellow);
+            box-shadow: 
+                0 0 20px rgba(255, 255, 0, 0.5),
+                inset 0 0 20px rgba(255, 255, 0, 0.2);
+            transform: translateY(-3px) scale(1.05);
+            animation: bombPulse 2s infinite;
+        }
+
+        @keyframes bombPulse {
+            0%, 100% { 
+                box-shadow: 
+                    0 0 20px rgba(255, 255, 0, 0.5),
+                    inset 0 0 20px rgba(255, 255, 0, 0.2); 
+                border-color: var(--selection-yellow); 
+            }
+            50% { 
+                box-shadow: 
+                    0 0 30px rgba(255, 255, 0, 0.7),
+                    inset 0 0 30px rgba(255, 255, 0, 0.3); 
+                border-color: var(--selection-yellow);
+            }
+        }
+
         .game-grid-section {
             min-height: 400px;
         }
@@ -288,19 +567,6 @@
             position: relative;
             overflow: hidden;
             perspective: 1000px;
-        }
-
-        .grid-cell::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, transparent, rgba(0, 247, 255, 0.1), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .grid-cell:hover::before {
-            opacity: 1;
         }
 
         .grid-cell.loading {
@@ -351,42 +617,6 @@
                 0 0 15px rgba(0, 255, 157, 0.3);
         }
 
-        .grid-cell.recommended {
-            position: relative;
-            overflow: visible;
-        }
-
-        .grid-cell.recommended::after {
-            content: '✰';
-            position: absolute;
-            top: -20px;
-            right: -10px;
-            font-size: 1.2rem;
-            animation: firePulse 1s infinite alternate;
-            filter: drop-shadow(0 0 5px orange);
-            z-index: 2;
-        }
-
-        @keyframes firePulse {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.2); opacity: 1; }
-        }
-
-        .grid-cell.best-choice {
-            background: linear-gradient(45deg, rgba(0, 255, 157, 0.3), rgba(0, 247, 255, 0.3));
-            border-color: var(--neon-yellow);
-            box-shadow: 
-                0 0 25px rgba(255, 204, 0, 0.4),
-                inset 0 0 25px rgba(255, 204, 0, 0.2);
-            animation: bestChoiceGlow 3s infinite alternate;
-        }
-
-        @keyframes bestChoiceGlow {
-            0% { box-shadow: 0 0 25px rgba(255, 204, 0, 0.4), inset 0 0 25px rgba(255, 204, 0, 0.2); }
-            100% { box-shadow: 0 0 35px rgba(255, 204, 0, 0.6), inset 0 0 35px rgba(255, 204, 0, 0.3); }
-        }
-
-        /* === PREDICTION DISPLAY === */
         .prediction-panel {
             min-height: 100px;
             background: rgba(15, 22, 39, 0.9);
@@ -397,22 +627,6 @@
             position: relative;
             overflow: hidden;
             backdrop-filter: blur(5px);
-        }
-
-        .prediction-panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 247, 255, 0.05), transparent);
-            animation: scan 10s linear infinite;
-        }
-
-        @keyframes scan {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
         }
 
         .prediction-content {
@@ -451,23 +665,6 @@
             text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
         }
 
-        .recommendation-badge {
-            display: inline-block;
-            background: linear-gradient(45deg, var(--neon-yellow), var(--neon-green));
-            color: #000;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            margin-left: 10px;
-            animation: badgePulse 2s infinite;
-        }
-
-        @keyframes badgePulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.9; }
-        }
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -497,7 +694,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* === ACTION BUTTONS === */
         .action-panel {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -528,23 +724,6 @@
             overflow: hidden;
         }
 
-        .cyber-action-btn::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .cyber-action-btn:hover::before {
-            opacity: 1;
-        }
-
-        .cyber-action-btn:active {
-            transform: scale(0.95);
-        }
-
         .start-btn {
             background: linear-gradient(135deg, var(--neon-green), #00a86b);
             color: #000;
@@ -571,8 +750,17 @@
             transform: translateY(-3px);
         }
 
-        .cyber-action-btn i {
-            font-size: 1.2rem;
+        .back-btn {
+            background: linear-gradient(135deg, var(--neon-pink), #cc00ff);
+            color: #000;
+            box-shadow: 0 10px 30px rgba(255, 0, 255, 0.3);
+            border: 2px solid var(--neon-pink);
+        }
+
+        .back-btn:hover {
+            background: linear-gradient(135deg, #ff00ff, #cc00ff);
+            box-shadow: 0 15px 40px rgba(255, 0, 255, 0.5);
+            transform: translateY(-3px);
         }
 
         /* === LOADING OVERLAY === */
@@ -641,6 +829,129 @@
             75% { text-shadow: 0 0 10px var(--neon-yellow), 0 0 20px var(--neon-yellow); }
         }
 
+        /* === FLOATING ICONS === */
+        .floating-icons {
+            position: fixed;
+            bottom: 90px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .floating-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-decoration: none;
+        }
+
+        .floating-icon:hover {
+            transform: scale(1.1) rotate(10deg);
+        }
+
+        .whatsapp-icon {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+        }
+
+        .channel-icon {
+            background: linear-gradient(135deg, var(--neon-pink), #cc00ff);
+        }
+
+        .info-icon {
+            background: linear-gradient(135deg, var(--neon-blue), #0066ff);
+        }
+
+        /* === NOTIFICATION === */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: var(--radius);
+            font-family: var(--font-cyber);
+            font-weight: 700;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s, top 0.3s;
+            text-align: center;
+        }
+
+        .notification.show {
+            opacity: 1;
+            top: 30px;
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, var(--neon-green), #00a86b);
+            color: #000;
+            border: 2px solid var(--neon-green);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, var(--neon-red), #cc0000);
+            color: #000;
+            border: 2px solid var(--neon-red);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, var(--neon-yellow), #ff9900);
+            color: #000;
+            border: 2px solid var(--neon-yellow);
+        }
+
+        /* === USERNAME MODAL === */
+        .username-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 23, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2001;
+            padding: 20px;
+        }
+
+        .username-modal.active {
+            display: flex;
+        }
+
+        .username-form {
+            background: var(--glass);
+            border-radius: var(--radius);
+            padding: 30px;
+            border: 1px solid var(--glass-border);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .username-input {
+            width: 100%;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid var(--neon-blue);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: var(--font-cyber);
+            font-size: 1.1rem;
+            margin: 20px 0;
+            text-align: center;
+        }
+
         /* === RESPONSIVE === */
         @media (min-width: 768px) {
             .app-container {
@@ -661,676 +972,1192 @@
                 margin-top: 30px;
             }
         }
-        
-        /* Add to the :root section if needed */
-:root {
-    --warning-orange: #ff9900;
-}
-
-/* Add after existing CSS */
-.warning-flash {
-    animation: warningFlash 1s infinite alternate;
-}
-
-@keyframes warningFlash {
-    0% { color: var(--warning-orange); text-shadow: 0 0 10px var(--warning-orange); }
-    100% { color: var(--neon-red); text-shadow: 0 0 20px var(--neon-red); }
-}
-
-.high-risk-btn {
-    border-color: var(--danger-red) !important;
-    box-shadow: 0 0 15px rgba(255, 51, 85, 0.5) !important;
-    position: relative;
-}
-
-.high-risk-btn::before {
-    content: ' ';
-    position: absolute;
-    top: -10px;
-    right:
-    
-    @keyframes pulse {
-    0%, 100% { opacity: 0.6; text-shadow: 0 0 5px var(--neon-pink); }
-    50% { opacity: 1; text-shadow: 0 0 15px var(--neon-pink); }
-}
     </style>
 </head>
 <body>
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="cyber-loader"></div>
-        <div class="loading-text" id="loadingText">ANALYZING PATTERNS</div>
+        <div class="loading-text" id="loadingText">LOADING</div>
     </div>
 
-    <!-- Main App -->
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Username Modal -->
+    <div class="username-modal" id="usernameModal">
+        <div class="username-form">
+            <h2 style="font-family: var(--font-cyber); color: var(--neon-blue); margin-bottom: 20px;">
+                <i class="fas fa-user"></i> SET USERNAME
+            </h2>
+            <input type="text" class="username-input" id="usernameInput" placeholder="ENTER YOUR NAME" maxlength="20">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                <button class="cyber-action-btn back-btn" onclick="closeUsernameModal()">
+                    <i class="fas fa-times"></i> CANCEL
+                </button>
+                <button class="cyber-action-btn start-btn" onclick="saveUsername()">
+                    <i class="fas fa-save"></i> SAVE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Icons -->
+    <div class="floating-icons">
+        <a href="https://wa.me/255000000000" class="floating-icon whatsapp-icon" target="_blank" id="whatsappIcon">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+        <a href="https://whatsapp.com/channel/0029Vb72cVkJ3jv10gzqTn18" class="floating-icon channel-icon" target="_blank" id="channelIcon">
+            <i class="fab fa-whatsapp"></i>
+        </a>
+        <div class="floating-icon info-icon" onclick="showInfo()">
+            <i class="fas fa-info"></i>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
     <div class="app-container">
-        
-        <!-- Cyber Header -->
-<div class="cyber-header">
-    <h1 style="font-size: 1.5rem; margin-bottom: 5px;">STANY MINES</h1>
-    <div style="font-family: var(--font-cyber); color: var(--neon-green); 
-                font-size: 0.9rem; letter-spacing: 1px; margin-top: 5px;">
-        PLAYER: <span id="playerName">VIP User</span>
-    </div>
-</div>
-
-        <!-- Bomb Selection -->
-        <div class="cyber-section">
-            <div class="section-title">BOMB CONFIGURATION</div>
-            <div class="cyber-buttons" id="bombSelection"><button class="cyber-btn safe-bomb selected">2</button><button class="cyber-btn safe-bomb">3</button><button class="cyber-btn high-risk high-risk-btn">5</button><button class="cyber-btn high-risk high-risk-btn">7</button></div>
-        </div>
-
-        <!-- Game Grid -->
-        <div class="cyber-section game-grid-section">
-            <div class="cyber-grid" id="gameGrid"><div class="grid-cell" data-index="0">?</div><div class="grid-cell" data-index="1">?</div><div class="grid-cell" data-index="2">?</div><div class="grid-cell" data-index="3">?</div><div class="grid-cell" data-index="4">?</div><div class="grid-cell" data-index="5">?</div><div class="grid-cell" data-index="6">?</div><div class="grid-cell" data-index="7">?</div><div class="grid-cell" data-index="8">?</div><div class="grid-cell" data-index="9">?</div><div class="grid-cell" data-index="10">?</div><div class="grid-cell" data-index="11">?</div><div class="grid-cell" data-index="12">?</div><div class="grid-cell" data-index="13">?</div><div class="grid-cell" data-index="14">?</div><div class="grid-cell" data-index="15">?</div><div class="grid-cell" data-index="16">?</div><div class="grid-cell" data-index="17">?</div><div class="grid-cell" data-index="18">?</div><div class="grid-cell" data-index="19">?</div><div class="grid-cell" data-index="20">?</div><div class="grid-cell" data-index="21">?</div><div class="grid-cell" data-index="22">?</div><div class="grid-cell" data-index="23">?</div><div class="grid-cell" data-index="24">?</div></div>
-        </div>
-
-        <!-- Prediction Panel -->
-        <div class="prediction-panel">
-            <div class="prediction-content">
-                <div class="prediction-title">
-                    <i class="fas fa-brain"></i> SERVER ANALYSIS 
-                    <span class="recommendation-badge">🔴live</span>
-                </div>
-                <div class="prediction-text" id="predictionDisplay">SELECT <span class="danger-highlight">BOMB</span> COUNT AND START<br>
-            Current time: <span class="cyber-highlight"><span class="cyber-highlight">7</span>:<span class="cyber-highlight">58</span> PM</span></div>
-                
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-value" id="safeCount">?</div>
-                        <div class="stat-label">SAFE CELLS</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="bombCount">2</div>
-                        <div class="stat-label">BOMBS</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="accuracy">?</div>
-                        <div class="stat-label">ACCURACY</div>
+        <!-- Main Menu Page -->
+        <div class="main-menu" id="mainMenu">
+            <div class="cyber-header">
+                <h1 id="appTitle">STANY MINES PREDICTOR</h1>
+                <div class="status-badge" id="userStatus">FREE TRIAL</div>
+                <div class="user-info">
+                    <div class="username-display">
+                        <i class="fas fa-user"></i>
+                        <span id="displayUsername">GUEST USER</span>
+                        <button class="edit-username-btn" onclick="openUsernameModal()">
+                            <i class="fas fa-edit"></i>
+                        </button>
                     </div>
                 </div>
             </div>
-        </div><br><br>
 
-        <!-- Action Buttons -->
-        <div class="action-panel">
-            <button class="cyber-action-btn start-btn" id="startBtn">
-                <i class="fas fa-rocket"></i> START
-            </button>
-            <button class="cyber-action-btn reset-btn" id="resetBtn">
-                <i class="fas fa-sync-alt"></i> RESET
-            </button>
+            <div class="menu-buttons">
+                <button class="cyber-menu-btn btn-free" onclick="enterFreeTrial()">
+                    <i class="fas fa-play-circle"></i> FREE TRIAL
+                </button>
+                <button class="cyber-menu-btn btn-premium" onclick="enterPremiumCode()">
+                    <i class="fas fa-crown"></i> ENTER PREMIUM CODE
+                </button>
+                <button class="cyber-menu-btn btn-reseller" onclick="showResellerPage()">
+                    <i class="fas fa-code"></i> RESELLER CODES
+                </button>
+                <button class="cyber-menu-btn btn-whatsapp" onclick="showPaymentPage()">
+                    <i class="fas fa-shopping-cart"></i> BUY PREMIUM
+                </button>
+            </div>
+        </div>
+
+        <!-- Premium Code Input Page -->
+        <div class="code-input-page" id="codeInputPage">
+            <div class="cyber-card">
+                <div class="section-title">
+                    <i class="fas fa-key"></i> ENTER PREMIUM CODE
+                </div>
+                <div class="code-input-group">
+                    <input type="text" class="cyber-input" id="premiumCode" placeholder="ENTER CODE HERE" maxlength="10">
+                </div>
+                <div class="info-text" id="codeInfo">
+                    Enter your premium code to unlock full access
+                </div>
+                <div id="codeMessage"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                    <button class="cyber-action-btn back-btn" onclick="goBackToMenu()">
+                        <i class="fas fa-arrow-left"></i> BACK
+                    </button>
+                    <button class="cyber-action-btn start-btn" onclick="validatePremiumCode()">
+                        <i class="fas fa-check"></i> VERIFY
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reseller Page -->
+        <div class="code-input-page" id="resellerPage">
+            <div class="cyber-card">
+                <div class="section-title">
+                    <i class="fas fa-code-branch"></i> RESELLER CODES
+                </div>
+                <div class="info-text">
+                    Click on a code to copy it. Each code can be used once per device.
+                </div>
+                <div class="reseller-codes" id="resellerCodes">
+                    <!-- Codes will be loaded here -->
+                </div>
+                <div id="resellerMessage"></div>
+                <div style="margin-top: 20px;">
+                    <button class="cyber-action-btn back-btn" onclick="goBackToMenu()" style="width: 100%;">
+                        <i class="fas fa-arrow-left"></i> BACK TO MENU
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Page -->
+        <div class="code-input-page" id="paymentPage">
+            <div class="cyber-card">
+                <div class="section-title">
+                    <i class="fas fa-credit-card"></i> BUY PREMIUM
+                </div>
+                <div class="payment-options">
+                    <div class="payment-option" onclick="selectPaymentOption(1)">
+                        <i class="fas fa-crown" style="font-size: 2rem; color: var(--neon-yellow);"></i>
+                        <div class="payment-amount">3,000 TZS</div>
+                        <div class="payment-duration">7 DAYS PREMIUM</div>
+                    </div>
+                    <div class="payment-option" onclick="selectPaymentOption(2)">
+                        <i class="fas fa-gem" style="font-size: 2rem; color: var(--neon-pink);"></i>
+                        <div class="payment-amount">10,000 TZS</div>
+                        <div class="payment-duration">30 DAYS PREMIUM</div>
+                    </div>
+                </div>
+                <div class="phone-input-group">
+                    <input type="tel" class="cyber-input" id="paymentPhone" placeholder="ENTER PHONE NUMBER (07...)" maxlength="10">
+                </div>
+                <div class="info-text">
+                    You will receive a USSD push to complete payment
+                </div>
+                <div id="paymentMessage"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+                    <button class="cyber-action-btn back-btn" onclick="goBackToMenu()">
+                        <i class="fas fa-arrow-left"></i> BACK
+                    </button>
+                    <button class="cyber-action-btn start-btn" onclick="processPayment()" id="payButton">
+                        <i class="fas fa-lock"></i> PAY NOW
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictor Page -->
+        <div class="predictor-page" id="predictorPage">
+            <div class="predictor-header">
+                <div class="predictor-user-info">
+                    <i class="fas fa-user"></i> <span id="predictorUsername">GUEST USER</span>
+                </div>
+                <div class="status-badge" id="predictorStatus">FREE TRIAL</div>
+            </div>
+
+            <!-- Bomb Selection -->
+            <div class="cyber-card">
+                <div class="section-title">BOMB CONFIGURATION</div>
+                <div class="cyber-buttons" id="bombSelection">
+                    <button class="cyber-btn safe-bomb selected">2</button>
+                    <button class="cyber-btn safe-bomb">3</button>
+                    <button class="cyber-btn high-risk">5</button>
+                    <button class="cyber-btn high-risk">7</button>
+                </div>
+            </div>
+
+            <!-- Game Grid -->
+            <div class="cyber-card game-grid-section">
+                <div class="cyber-grid" id="gameGrid">
+                    <!-- Grid cells will be generated here -->
+                </div>
+            </div>
+
+            <!-- Prediction Panel -->
+            <div class="prediction-panel">
+                <div class="prediction-content">
+                    <div class="prediction-title">
+                        <i class="fas fa-brain"></i> SERVER ANALYSIS 
+                        <span style="background: linear-gradient(45deg, var(--neon-yellow), var(--neon-green)); color: #000; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem;">🔴 LIVE</span>
+                    </div>
+                    <div class="prediction-text" id="predictionDisplay">
+                        SELECT BOMB COUNT AND START<br>
+                        Current time: <span class="cyber-highlight" id="currentTime">00:00</span>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="safeCount">?</div>
+                            <div class="stat-label">SAFE CELLS</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="bombCount">2</div>
+                            <div class="stat-label">BOMBS</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="accuracy">?</div>
+                            <div class="stat-label">ACCURACY</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-panel">
+                <button class="cyber-action-btn back-btn" onclick="goBackToMenu()">
+                    <i class="fas fa-arrow-left"></i> BACK
+                </button>
+                <button class="cyber-action-btn start-btn" id="startBtn">
+                    <i class="fas fa-rocket"></i> START
+                </button>
+                <button class="cyber-action-btn reset-btn" id="resetBtn">
+                    <i class="fas fa-sync-alt"></i> RESET
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-    //JINA
-    const PLAYER_NAME = "VIP User"; 
-
-    // === GAME STATE ===
-    const gameState = {
-        active: false,
-        bombs: 2,
-        mines: [],
-        safeCells: [],
-        revealed: [],
-        gridSize: 25,
-        bombOptions: [2, 3, 5, 7],
-        recommendations: [],
-        bestChoices: []
-    };
-    
-    // === SAVE/LOAD GAME STATE ===
-    const STORAGE_KEY = "mines_predictor_save";
-
-    function saveGameState() {
-        const saveData = {
-            active: gameState.active,
-            bombs: gameState.bombs,
-            mines: gameState.mines,
-            revealed: gameState.revealed,
-            recommendations: gameState.recommendations,
-            bestChoices: gameState.bestChoices,
-            savedAt: Date.now()
+        // ==================== FIREBASE CONFIGURATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyDtWAjmGIWVr3QGESAClBzRkQ5AZr5Zeys",
+            authDomain: "stanybots.firebaseapp.com",
+            projectId: "stanybots",
+            storageBucket: "stanybots.firebasestorage.app",
+            messagingSenderId: "381983533939",
+            appId: "1:381983533939:web:201157399592c6389df306",
+            measurementId: "G-W3C0C280BY"
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
-    }
 
-    function loadGameState() {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return false;
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const analytics = firebase.analytics();
+
+        // ==================== GLOBAL VARIABLES ====================
+        const HARAKAPAY_API_KEY = 'hpk_fb763cc04e2feec29eb19041f75f54d0e6eb0067486caaae';
+        const HARAKAPAY_BASE_URL = 'https://harakapay.net/api/v1';
         
-        try {
-            const data = JSON.parse(saved);
-            
-            // Check if save is not too old (1 hour max)
-            if (Date.now() - data.savedAt > 3600000) {
-                localStorage.removeItem(STORAGE_KEY);
-                return false;
-            }
-            
-            // Restore game state
-            gameState.active = data.active;
-            gameState.bombs = data.bombs;
-            gameState.mines = data.mines || [];
-            gameState.revealed = data.revealed || [];
-            gameState.recommendations = data.recommendations || [];
-            gameState.bestChoices = data.bestChoices || [];
-            
-            return true;
-        } catch (e) {
-            localStorage.removeItem(STORAGE_KEY);
-            return false;
+        let deviceId = localStorage.getItem('deviceId');
+        if (!deviceId) {
+            deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('deviceId', deviceId);
         }
-    }
 
-    function clearGameState() {
-        localStorage.removeItem(STORAGE_KEY);
-    }
+        let userStatus = 'free';
+        let freeTriesLeft = 2;
+        let premiumExpiry = null;
+        let selectedPaymentOption = null;
+        let username = localStorage.getItem('username') || 'GUEST USER';
 
-    // === DOM ELEMENTS ===
-    const bombSelection = document.getElementById('bombSelection');
-    const gameGrid = document.getElementById('gameGrid');
-    const predictionDisplay = document.getElementById('predictionDisplay');
-    const startBtn = document.getElementById('startBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const loadingText = document.getElementById('loadingText');
-    const safeCount = document.getElementById('safeCount');
-    const bombCount = document.getElementById('bombCount');
-    const accuracy = document.getElementById('accuracy');
+        // ==================== GAME STATE ====================
+        const gameState = {
+            active: false,
+            bombs: 2,
+            mines: [],
+            safeCells: [],
+            revealed: [],
+            gridSize: 25,
+            bombOptions: [2, 3, 5, 7],
+            recommendations: [],
+            bestChoices: []
+        };
 
-    // === INITIALIZATION ===
-    function initGame() {
-        // Set player name
-        document.getElementById('playerName').textContent = PLAYER_NAME;
-        
-        // Try to load saved game
-        const hasSavedGame = loadGameState();
-        
-        renderBombSelection();
-        renderGrid();
-        setupEventListeners();
-        
-        // Initialize stats with "?" (unknown)
-        safeCount.textContent = "?";
-        bombCount.textContent = gameState.bombs;
-        accuracy.textContent = "?";
-        
-        if (hasSavedGame && gameState.active) {
-            // Restore the game display
-            updateGameGrid();
-            updateStats(); // Only show stats if game was saved
-            updatePrediction("GAME RESTORED - CONTINUING...");
-            showNotification("Game restored", "info");
-        } else {
-            // Show initial message with time
-            const currentTime = getFormattedTime();
-            updatePrediction(`SELECT BOMB COUNT AND START<br>
-            Current time: <span class="cyber-highlight">${currentTime}</span>`);
-        }
-    }
+        // ==================== DOM ELEMENTS ====================
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const notification = document.getElementById('notification');
+        const mainMenu = document.getElementById('mainMenu');
+        const codeInputPage = document.getElementById('codeInputPage');
+        const resellerPage = document.getElementById('resellerPage');
+        const paymentPage = document.getElementById('paymentPage');
+        const predictorPage = document.getElementById('predictorPage');
+        const displayUsername = document.getElementById('displayUsername');
+        const predictorUsername = document.getElementById('predictorUsername');
+        const userStatusBadge = document.getElementById('userStatus');
+        const predictorStatus = document.getElementById('predictorStatus');
+        const appTitle = document.getElementById('appTitle');
+        const whatsappIcon = document.getElementById('whatsappIcon');
+        const channelIcon = document.getElementById('channelIcon');
 
-    // === TIME FUNCTION ===
-    function getFormattedTime() {
-        const now = new Date();
-        let hours = now.getHours();
-        let minutes = now.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        
-        hours = hours % 12;
-        hours = hours ? hours : 12; // 0 should be 12
-        minutes = minutes < 10 ? '0' + minutes : minutes;
-        
-        return `${hours}:${minutes} ${ampm}`;
-    }
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Disable right-click
+            document.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                showNotification('Right-click disabled', 'warning');
+            });
 
-    // === RENDER FUNCTIONS ===
-    function renderBombSelection() {
-        bombSelection.innerHTML = '';
-        gameState.bombOptions.forEach(bombCount => {
-            const btn = document.createElement('button');
-            btn.className = 'cyber-btn';
+            // Initialize user
+            await initializeUser();
             
-            // Add color classes based on bomb count
-            if (bombCount === 2 || bombCount === 3) {
-                btn.classList.add('safe-bomb'); // Green outline
-            } else if (bombCount >= 5) {
-                btn.classList.add('high-risk'); // Red outline
-            }
+            // Update username display
+            updateUsernameDisplay();
             
-            // Add warning icon for high risk
-            if (bombCount >= 5) {
-                btn.classList.add('high-risk-btn');
-            }
-            
-            // Selected state
-            if (bombCount === gameState.bombs) {
-                btn.classList.add('selected');
-            }
-            
-            btn.textContent = bombCount;
-            btn.onclick = () => selectBombs(bombCount);
-            bombSelection.appendChild(btn);
+            // Update time
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 60000);
+
+            // Load admin settings
+            await loadAdminSettings();
         });
-    }
 
-    function renderGrid() {
-        gameGrid.innerHTML = '';
-        for (let i = 0; i < gameState.gridSize; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'grid-cell';
-            cell.dataset.index = i;
-            cell.textContent = '?';
-            gameGrid.appendChild(cell);
-        }
-    }
-
-    // === GAME LOGIC ===
-    function selectBombs(count) {
-        gameState.bombs = count;
-        renderBombSelection();
-        
-        // Only show bomb count, others remain "?"
-        bombCount.textContent = count;
-        safeCount.textContent = "?";
-        accuracy.textContent = "?";
-        
-        // Get current time for display
-        const currentTime = getFormattedTime();
-        
-        // Show warning for high risk bombs (5+)
-        if (count >= 5) {
-            updatePrediction(`⚠️ <span class="danger-highlight">HIGH RISK WARNING!</span> ⚠️<br>
-            ${count} BOMBS DETECTED - DANGER!<br>
-            Survival probability: <span class="danger-highlight">${Math.round((25-count)/25*100)}%</span><br>
-            Current time: <span class="cyber-highlight">${currentTime}</span><br>
-            <span class="cyber-highlight">Advice: Choose lower bomb (2-3) for better odds</span>`);
-        } else {
-            updatePrediction(`BOMBS SET TO: ${count}. READY FOR ANALYSIS.<br>
-            Current time: <span class="cyber-highlight">${currentTime}</span>`);
-        }
-    }
-
-    async function startGame() {
-        if (gameState.active) {
-            showNotification("ANALYSIS ALREADY IN PROGRESS", "warning");
-            return;
-        }
-
-        // Show loading animation
-        showLoading(true);
-        loadingText.textContent = "GENERATING MINEFIELD";
-        
-        // Show "loading..." in stats
-        safeCount.innerHTML = '<span style="color: var(--neon-pink); animation: pulse 1.5s infinite;">loading...</span>';
-        bombCount.textContent = gameState.bombs;
-        accuracy.innerHTML = '<span style="color: var(--neon-pink); animation: pulse 1.5s infinite;">loading...</span>';
-        
-        await sleep(800);
-
-        // Reset game state
-        gameState.active = true;
-        gameState.mines = [];
-        gameState.safeCells = [];
-        gameState.revealed = [];
-        gameState.recommendations = [];
-        gameState.bestChoices = [];
-
-        // Generate mines
-        const positions = Array.from({length: gameState.gridSize}, (_, i) => i);
-        for (let i = 0; i < gameState.bombs; i++) {
-            const randomIndex = Math.floor(Math.random() * positions.length);
-            gameState.mines.push(positions[randomIndex]);
-            positions.splice(randomIndex, 1);
-        }
-
-        // Generate safe cells (automatically reveal some)
-        loadingText.textContent = "ANALYZING PATTERNS";
-        await sleep(800);
-
-        // Generate some safe cells to reveal (40-60% of safe cells)
-        const totalSafe = gameState.gridSize - gameState.bombs;
-        const cellsToReveal = Math.floor(totalSafe * (0.4 + Math.random() * 0.2));
-        
-        for (let i = 0; i < cellsToReveal; i++) {
-            const safePositions = positions.filter(p => !gameState.mines.includes(p));
-            if (safePositions.length === 0) break;
+        // ==================== USER MANAGEMENT ====================
+        async function initializeUser() {
+            showLoading('Checking user status...');
             
-            const randomIndex = Math.floor(Math.random() * safePositions.length);
-            const safeCell = safePositions[randomIndex];
-            gameState.revealed.push(safeCell);
-            positions.splice(positions.indexOf(safeCell), 1);
+            try {
+                // Check if user has premium in Firebase
+                const userDoc = await db.collection('users').doc(deviceId).get();
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    userStatus = userData.status || 'free';
+                    premiumExpiry = userData.expiryDate || null;
+                    
+                    if (userStatus === 'premium') {
+                        const now = new Date();
+                        const expiry = userData.expiryDate ? userData.expiryDate.toDate() : null;
+                        
+                        if (expiry && now > expiry) {
+                            // Premium expired
+                            userStatus = 'free';
+                            await db.collection('users').doc(deviceId).update({
+                                status: 'free',
+                                expiryDate: null
+                            });
+                        } else {
+                            updateUIForPremium();
+                        }
+                    }
+                    
+                    // Load username from Firebase if exists
+                    if (userData.username) {
+                        username = userData.username;
+                        localStorage.setItem('username', username);
+                    }
+                } else {
+                    // Create new user
+                    await db.collection('users').doc(deviceId).set({
+                        deviceId: deviceId,
+                        username: username,
+                        status: 'free',
+                        createdAt: new Date(),
+                        lastActive: new Date(),
+                        usageCount: 0
+                    });
+                }
+
+                // Check free trial usage
+                const freeTrialDoc = await db.collection('freeTrials').doc(deviceId).get();
+                if (freeTrialDoc.exists) {
+                    const trialData = freeTrialDoc.data();
+                    const lastUsed = trialData.lastUsed ? trialData.lastUsed.toDate() : new Date();
+                    const now = new Date();
+                    const hoursDiff = (now - lastUsed) / (1000 * 60 * 60);
+                    
+                    if (hoursDiff < 24) {
+                        freeTriesLeft = trialData.triesLeft || 2;
+                    } else {
+                        // Reset after 24 hours
+                        freeTriesLeft = 2;
+                        await db.collection('freeTrials').doc(deviceId).set({
+                            triesLeft: 2,
+                            lastUsed: new Date()
+                        });
+                    }
+                } else {
+                    // First time user
+                    freeTriesLeft = 2;
+                    await db.collection('freeTrials').doc(deviceId).set({
+                        triesLeft: 2,
+                        lastUsed: new Date()
+                    });
+                }
+
+                updateStatusBadge();
+            } catch (error) {
+                console.error('Error initializing user:', error);
+            } finally {
+                hideLoading();
+            }
         }
 
-        // Calculate recommendations
-        loadingText.textContent = "CALCULATING PROBABILITIES";
-        await sleep(800);
-        calculateRecommendations();
-
-        // For high-risk games (5+ bombs), only show safest 1 cell
-        if (gameState.bombs >= 5) {
-            gameState.recommendations = gameState.bestChoices.slice(0, 1);
+        function updateStatusBadge() {
+            if (userStatus === 'premium') {
+                userStatusBadge.textContent = 'PREMIUM USER';
+                userStatusBadge.className = 'status-badge status-premium';
+                predictorStatus.textContent = 'PREMIUM USER';
+                predictorStatus.className = 'status-badge status-premium';
+            } else {
+                userStatusBadge.textContent = `FREE TRIAL (${freeTriesLeft} left)`;
+                userStatusBadge.className = 'status-badge status-free';
+                predictorStatus.textContent = `FREE TRIAL (${freeTriesLeft} left)`;
+                predictorStatus.className = 'status-badge status-free';
+            }
         }
 
-        // Update grid with animation
-        loadingText.textContent = "RENDERING RESULTS";
-        await sleep(600);
-        showLoading(false);
+        function updateUsernameDisplay() {
+            displayUsername.textContent = username;
+            predictorUsername.textContent = username;
+        }
 
-        // Animate and reveal grid (stats will update at the end of this)
-        await animateGridReveal();
-    }
+        function updateUIForPremium() {
+            displayUsername.textContent = username + ' ⭐';
+            predictorUsername.textContent = username + ' ⭐';
+        }
 
-    function resetGame() {
-        gameState.active = false;
-        gameState.mines = [];
-        gameState.safeCells = [];
-        gameState.revealed = [];
-        gameState.recommendations = [];
-        gameState.bestChoices = [];
+        // ==================== USERNAME MANAGEMENT ====================
+        function openUsernameModal() {
+            document.getElementById('usernameInput').value = username;
+            document.getElementById('usernameModal').classList.add('active');
+        }
 
-        // Reset stats display - show ? for unknown values
-        safeCount.textContent = "?";
-        bombCount.textContent = gameState.bombs;
-        accuracy.textContent = "?";
-        
-        // Reset grid with animation
-        document.querySelectorAll('.grid-cell').forEach((cell, index) => {
-            cell.className = 'grid-cell';
-            cell.textContent = '?';
-            setTimeout(() => {
-                cell.style.opacity = '0.5';
+        function closeUsernameModal() {
+            document.getElementById('usernameModal').classList.remove('active');
+        }
+
+        async function saveUsername() {
+            const newUsername = document.getElementById('usernameInput').value.trim();
+            
+            if (!newUsername) {
+                showNotification('Please enter a username', 'error');
+                return;
+            }
+            
+            if (newUsername.length < 2 || newUsername.length > 20) {
+                showNotification('Username must be 2-20 characters', 'error');
+                return;
+            }
+            
+            username = newUsername;
+            localStorage.setItem('username', username);
+            
+            // Save to Firebase
+            try {
+                await db.collection('users').doc(deviceId).update({
+                    username: username,
+                    updatedAt: new Date()
+                });
+            } catch (error) {
+                console.error('Error saving username:', error);
+            }
+            
+            updateUsernameDisplay();
+            closeUsernameModal();
+            showNotification('Username saved successfully!', 'success');
+        }
+
+        // ==================== PAGE NAVIGATION ====================
+        function showPage(pageName) {
+            // Hide all pages
+            mainMenu.style.display = 'none';
+            codeInputPage.style.display = 'none';
+            resellerPage.style.display = 'none';
+            paymentPage.style.display = 'none';
+            predictorPage.style.display = 'none';
+
+            // Show selected page
+            switch(pageName) {
+                case 'main':
+                    mainMenu.style.display = 'block';
+                    break;
+                case 'code':
+                    codeInputPage.style.display = 'block';
+                    break;
+                case 'reseller':
+                    resellerPage.style.display = 'block';
+                    loadResellerCodes();
+                    break;
+                case 'payment':
+                    paymentPage.style.display = 'block';
+                    break;
+                case 'predictor':
+                    predictorPage.style.display = 'block';
+                    initializePredictor();
+                    break;
+            }
+        }
+
+        function goBackToMenu() {
+            showPage('main');
+        }
+
+        // ==================== FREE TRIAL ====================
+        async function enterFreeTrial() {
+            if (freeTriesLeft <= 0) {
+                showNotification('Free trial expired. Please upgrade to premium.', 'error');
+                return;
+            }
+
+            showLoading('Starting free trial...');
+            
+            // Deduct one try
+            freeTriesLeft--;
+            await db.collection('freeTrials').doc(deviceId).update({
+                triesLeft: freeTriesLeft,
+                lastUsed: new Date()
+            });
+
+            updateStatusBadge();
+            hideLoading();
+            showPage('predictor');
+        }
+
+        // ==================== PREMIUM CODE VALIDATION ====================
+        async function enterPremiumCode() {
+            showPage('code');
+            document.getElementById('premiumCode').value = '';
+            document.getElementById('codeMessage').innerHTML = '';
+        }
+
+        async function validatePremiumCode() {
+            const code = document.getElementById('premiumCode').value.trim().toUpperCase();
+            
+            if (!code) {
+                document.getElementById('codeMessage').innerHTML = 
+                    '<div class="error-text">Please enter a code</div>';
+                return;
+            }
+
+            showLoading('Validating code...');
+
+            try {
+                const codeDoc = await db.collection('premiumCodes').doc(code).get();
+                
+                if (!codeDoc.exists) {
+                    document.getElementById('codeMessage').innerHTML = 
+                        '<div class="error-text">Invalid code</div>';
+                    hideLoading();
+                    return;
+                }
+
+                const codeData = codeDoc.data();
+                
+                if (codeData.used) {
+                    document.getElementById('codeMessage').innerHTML = 
+                        '<div class="error-text">Code already used</div>';
+                    hideLoading();
+                    return;
+                }
+
+                if (codeData.expiryDate) {
+                    const now = new Date();
+                    const expiry = codeData.expiryDate.toDate();
+                    
+                    if (now > expiry) {
+                        document.getElementById('codeMessage').innerHTML = 
+                            '<div class="error-text">Code expired</div>';
+                        hideLoading();
+                        return;
+                    }
+                }
+
+                // Mark code as used and assign to user
+                await db.collection('premiumCodes').doc(code).update({
+                    used: true,
+                    usedBy: deviceId,
+                    usedAt: new Date()
+                });
+
+                // Update user status
+                const expiryDate = new Date();
+                const duration = codeData.duration || 7;
+                expiryDate.setDate(expiryDate.getDate() + duration);
+
+                await db.collection('users').doc(deviceId).set({
+                    status: 'premium',
+                    username: username,
+                    premiumCode: code,
+                    expiryDate: expiryDate,
+                    activatedAt: new Date()
+                }, { merge: true });
+
+                userStatus = 'premium';
+                updateStatusBadge();
+                updateUIForPremium();
+
+                document.getElementById('codeMessage').innerHTML = 
+                    '<div class="success-text">Premium activated successfully!</div>';
+                
                 setTimeout(() => {
-                    cell.style.opacity = '1';
-                }, 100);
-            }, index * 20);
-        });
+                    showPage('predictor');
+                }, 1500);
 
-        // Show reset message with time
-        const currentTime = getFormattedTime();
-        updatePrediction(`SYSTEM RESET. SELECT BOMBS AND START ANALYSIS.<br>
-        Current time: <span class="cyber-highlight">${currentTime}</span>`);
-        showNotification("SYSTEM RESET", "info");
-        clearGameState();
-    }
-    
-    function updateGameGrid() {
-        const cells = document.querySelectorAll('.grid-cell');
-        
-        cells.forEach((cell, index) => {
-            // Reset cell
-            cell.className = 'grid-cell';
-            cell.textContent = '?';
-            
-            if (gameState.mines.includes(index)) {
-                // Show mine
-                cell.classList.add('mine', 'revealed');
-                cell.textContent = '💣';
-            } else if (gameState.revealed.includes(index)) {
-                // Show safe cell
-                cell.classList.add('safe', 'revealed');
-                cell.textContent = '💎';
+            } catch (error) {
+                console.error('Error validating code:', error);
+                document.getElementById('codeMessage').innerHTML = 
+                    '<div class="error-text">Error validating code</div>';
+                hideLoading();
             }
-            
-            // Add recommendations
-            if (gameState.recommendations.includes(index)) {
-                cell.classList.add('recommended');
-            }
-            if (gameState.bestChoices.includes(index)) {
-                cell.classList.add('best-choice');
-            }
-            
-            // Style safe cells
-            if (!gameState.mines.includes(index)) {
-                cell.classList.add('safe');
-            }
-        });
-    }
+        }
 
-    // === RECOMMENDATION SYSTEM ===
-    function calculateRecommendations() {
-        const allCells = Array.from({length: gameState.gridSize}, (_, i) => i);
-        const unrevealedSafe = allCells.filter(i => 
-            !gameState.mines.includes(i) && 
-            !gameState.revealed.includes(i)
-        );
+        // ==================== RESELLER CODES ====================
+        async function showResellerPage() {
+            showPage('reseller');
+        }
 
-        // Calculate safety scores based on distance from mines
-        const scores = unrevealedSafe.map(index => {
-            const neighbors = getNeighbors(index);
-            const mineNeighbors = neighbors.filter(n => gameState.mines.includes(n));
-            const safeNeighbors = neighbors.filter(n => 
-                !gameState.mines.includes(n) && gameState.revealed.includes(n)
+        async function loadResellerCodes() {
+            showLoading('Loading codes...');
+            
+            try {
+                const codesSnapshot = await db.collection('premiumCodes')
+                    .where('reseller', '==', true)
+                    .where('used', '==', false)
+                    .limit(10)
+                    .get();
+
+                const codesContainer = document.getElementById('resellerCodes');
+                codesContainer.innerHTML = '';
+
+                if (codesSnapshot.empty) {
+                    codesContainer.innerHTML = '<div class="info-text">No codes available</div>';
+                    hideLoading();
+                    return;
+                }
+
+                codesSnapshot.forEach(doc => {
+                    const codeData = doc.data();
+                    const codeItem = document.createElement('div');
+                    codeItem.className = 'code-item';
+                    codeItem.textContent = doc.id;
+                    codeItem.onclick = () => copyCodeToClipboard(doc.id);
+                    
+                    if (codeData.used) {
+                        codeItem.classList.add('used');
+                        codeItem.onclick = null;
+                    }
+                    
+                    codesContainer.appendChild(codeItem);
+                });
+
+            } catch (error) {
+                console.error('Error loading codes:', error);
+                document.getElementById('resellerMessage').innerHTML = 
+                    '<div class="error-text">Error loading codes</div>';
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function copyCodeToClipboard(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                showNotification('Code copied to clipboard', 'success');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                showNotification('Failed to copy code', 'error');
+            });
+        }
+
+        // ==================== PAYMENT PROCESSING ====================
+        function showPaymentPage() {
+            showPage('payment');
+            document.getElementById('paymentPhone').value = '';
+            document.getElementById('paymentMessage').innerHTML = '';
+            selectedPaymentOption = null;
+            
+            // Reset selection
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+
+        function selectPaymentOption(option) {
+            selectedPaymentOption = option;
+            
+            document.querySelectorAll('.payment-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            document.querySelectorAll('.payment-option')[option - 1].classList.add('selected');
+        }
+
+        async function processPayment() {
+            if (!selectedPaymentOption) {
+                document.getElementById('paymentMessage').innerHTML = 
+                    '<div class="error-text">Please select a payment option</div>';
+                return;
+            }
+
+            const phone = document.getElementById('paymentPhone').value.trim();
+            if (!phone || !phone.match(/^0[67]\d{8}$/)) {
+                document.getElementById('paymentMessage').innerHTML = 
+                    '<div class="error-text">Please enter a valid phone number (07 or 06)</div>';
+                return;
+            }
+
+            const amount = selectedPaymentOption === 1 ? 3000 : 10000;
+            const duration = selectedPaymentOption === 1 ? 7 : 30;
+
+            showLoading('Processing payment...');
+
+            try {
+                // Call HarakaPay API
+                const response = await fetch(`${HARAKAPAY_BASE_URL}/collect`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': HARAKAPAY_API_KEY
+                    },
+                    body: JSON.stringify({
+                        phone: phone,
+                        amount: amount,
+                        description: `Mines Predictor Premium - ${duration} days`
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('paymentMessage').innerHTML = 
+                        '<div class="success-text">USSD push sent to your phone</div>';
+                    
+                    // Save payment record
+                    await db.collection('payments').doc(result.order_id).set({
+                        orderId: result.order_id,
+                        phone: phone,
+                        amount: amount,
+                        status: 'pending',
+                        createdAt: new Date(),
+                        deviceId: deviceId,
+                        username: username,
+                        duration: duration
+                    });
+
+                    // Start polling for payment status
+                    pollPaymentStatus(result.order_id, duration);
+                } else {
+                    document.getElementById('paymentMessage').innerHTML = 
+                        `<div class="error-text">${result.message || 'Payment failed'}</div>`;
+                    hideLoading();
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                document.getElementById('paymentMessage').innerHTML = 
+                    '<div class="error-text">Payment processing error</div>';
+                hideLoading();
+            }
+        }
+
+        async function pollPaymentStatus(orderId, duration) {
+            let attempts = 0;
+            const maxAttempts = 60; // Poll for 5 minutes (5 seconds interval)
+
+            const checkStatus = async () => {
+                attempts++;
+                
+                try {
+                    const response = await fetch(`${HARAKAPAY_BASE_URL}/status/${orderId}`, {
+                        headers: {
+                            'X-API-Key': HARAKAPAY_API_KEY
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success && result.payment?.status === 'completed') {
+                        // Payment completed successfully
+                        await activatePremium(duration);
+                        showNotification('Payment successful! Premium activated.', 'success');
+                        
+                        // Update payment record
+                        await db.collection('payments').doc(orderId).update({
+                            status: 'completed',
+                            completedAt: new Date(),
+                            netAmount: result.payment.net_amount,
+                            fee: result.payment.fee_amount
+                        });
+                        
+                        hideLoading();
+                        showPage('predictor');
+                        return;
+                    }
+
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkStatus, 5000); // Check every 5 seconds
+                    } else {
+                        document.getElementById('paymentMessage').innerHTML = 
+                            '<div class="error-text">Payment timeout. Please try again.</div>';
+                        hideLoading();
+                    }
+
+                } catch (error) {
+                    console.error('Status check error:', error);
+                    
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkStatus, 5000);
+                    } else {
+                        document.getElementById('paymentMessage').innerHTML = 
+                            '<div class="error-text">Status check failed</div>';
+                        hideLoading();
+                    }
+                }
+            };
+
+            checkStatus();
+        }
+
+        async function activatePremium(duration) {
+            // Generate premium code
+            const premiumCode = 'PAY_' + Math.random().toString(36).substr(2, 8).toUpperCase();
+            
+            // Set expiry date
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + duration);
+
+            // Save premium code
+            await db.collection('premiumCodes').doc(premiumCode).set({
+                duration: duration,
+                used: true,
+                usedBy: deviceId,
+                usedAt: new Date(),
+                expiryDate: expiryDate
+            });
+
+            // Update user status
+            await db.collection('users').doc(deviceId).set({
+                status: 'premium',
+                username: username,
+                premiumCode: premiumCode,
+                expiryDate: expiryDate,
+                activatedAt: new Date(),
+                paymentAmount: duration === 7 ? 3000 : 10000
+            }, { merge: true });
+
+            userStatus = 'premium';
+            updateStatusBadge();
+            updateUIForPremium();
+        }
+
+        // ==================== PREDICTOR GAME ====================
+        function initializePredictor() {
+            // Initialize game grid
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.innerHTML = '';
+            
+            for (let i = 0; i < gameState.gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.dataset.index = i;
+                cell.textContent = '?';
+                gameGrid.appendChild(cell);
+            }
+
+            // Initialize bomb selection
+            const bombSelection = document.getElementById('bombSelection');
+            bombSelection.innerHTML = '';
+            
+            gameState.bombOptions.forEach(bombCount => {
+                const btn = document.createElement('button');
+                btn.className = 'cyber-btn';
+                
+                if (bombCount === 2 || bombCount === 3) {
+                    btn.classList.add('safe-bomb');
+                } else {
+                    btn.classList.add('high-risk');
+                }
+                
+                if (bombCount === gameState.bombs) {
+                    btn.classList.add('selected');
+                }
+                
+                btn.textContent = bombCount;
+                btn.onclick = () => selectBombs(bombCount);
+                bombSelection.appendChild(btn);
+            });
+
+            // Set up event listeners
+            document.getElementById('startBtn').onclick = startGame;
+            document.getElementById('resetBtn').onclick = resetGame;
+
+            // Update time display
+            updateCurrentTime();
+            updatePrediction('SELECT BOMB COUNT AND START');
+        }
+
+        function selectBombs(count) {
+            gameState.bombs = count;
+            
+            // Update UI
+            document.querySelectorAll('.cyber-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if (parseInt(btn.textContent) === count) {
+                    btn.classList.add('selected');
+                }
+            });
+            
+            document.getElementById('bombCount').textContent = count;
+            
+            // Update prediction message
+            updatePrediction(`BOMBS SET TO ${count}. READY FOR ANALYSIS.`);
+        }
+
+        async function startGame() {
+            if (gameState.active) {
+                showNotification('ANALYSIS ALREADY IN PROGRESS', 'warning');
+                return;
+            }
+
+            if (userStatus === 'free' && freeTriesLeft <= 0) {
+                showNotification('Free trial expired. Please upgrade to premium.', 'error');
+                goBackToMenu();
+                return;
+            }
+
+            showLoading('GENERATING MINEFIELD...');
+
+            // Reset game state
+            gameState.active = true;
+            gameState.mines = [];
+            gameState.revealed = [];
+            gameState.recommendations = [];
+            gameState.bestChoices = [];
+
+            // Generate mines
+            const positions = Array.from({length: gameState.gridSize}, (_, i) => i);
+            for (let i = 0; i < gameState.bombs; i++) {
+                const randomIndex = Math.floor(Math.random() * positions.length);
+                gameState.mines.push(positions[randomIndex]);
+                positions.splice(randomIndex, 1);
+            }
+
+            // Generate safe cells to reveal
+            const totalSafe = gameState.gridSize - gameState.bombs;
+            const cellsToReveal = Math.floor(totalSafe * (0.4 + Math.random() * 0.2));
+            
+            for (let i = 0; i < cellsToReveal; i++) {
+                const safePositions = positions.filter(p => !gameState.mines.includes(p));
+                if (safePositions.length === 0) break;
+                
+                const randomIndex = Math.floor(Math.random() * safePositions.length);
+                const safeCell = safePositions[randomIndex];
+                gameState.revealed.push(safeCell);
+                positions.splice(positions.indexOf(safeCell), 1);
+            }
+
+            // Calculate recommendations
+            calculateRecommendations();
+
+            // Update grid with animation
+            await animateGridReveal();
+            hideLoading();
+            
+            // Update user usage count
+            await updateUsageCount();
+        }
+
+        function resetGame() {
+            gameState.active = false;
+            
+            // Reset grid
+            document.querySelectorAll('.grid-cell').forEach((cell, index) => {
+                cell.className = 'grid-cell';
+                cell.textContent = '?';
+            });
+
+            // Reset stats
+            document.getElementById('safeCount').textContent = '?';
+            document.getElementById('accuracy').textContent = '?';
+            
+            updatePrediction('SYSTEM RESET. SELECT BOMBS AND START.');
+        }
+
+        function calculateRecommendations() {
+            const allCells = Array.from({length: gameState.gridSize}, (_, i) => i);
+            const unrevealedSafe = allCells.filter(i => 
+                !gameState.mines.includes(i) && 
+                !gameState.revealed.includes(i)
             );
-            
-            let score = 100; // Base score
-            score -= mineNeighbors.length * 30; // Penalty for nearby mines
-            score += safeNeighbors.length * 15; // Bonus for safe neighbors
-            
-            // Bonus for corner cells (statistically safer)
+
+            const scores = unrevealedSafe.map(index => {
+                const neighbors = getNeighbors(index);
+                const mineNeighbors = neighbors.filter(n => gameState.mines.includes(n));
+                const safeNeighbors = neighbors.filter(n => 
+                    !gameState.mines.includes(n) && gameState.revealed.includes(n)
+                );
+                
+                let score = 100;
+                score -= mineNeighbors.length * 30;
+                score += safeNeighbors.length * 15;
+                
+                const row = Math.floor(index / 5);
+                const col = index % 5;
+                if ((row === 0 || row === 4) && (col === 0 || col === 4)) {
+                    score += 10;
+                }
+                
+                return { index, score };
+            });
+
+            scores.sort((a, b) => b.score - a.score);
+            const numRecommendations = Math.min(3, scores.length);
+            gameState.recommendations = scores.slice(0, numRecommendations).map(s => s.index);
+
+            if (scores.length > 0) {
+                gameState.bestChoices = [scores[0].index];
+            }
+        }
+
+        function getNeighbors(index) {
+            const neighbors = [];
             const row = Math.floor(index / 5);
             const col = index % 5;
-            if ((row === 0 || row === 4) && (col === 0 || col === 4)) {
-                score += 10;
-            }
             
-            return { index, score };
-        });
-
-        // Sort by score (highest first)
-        scores.sort((a, b) => b.score - a.score);
-
-        // Get recommendations (top 3-4)
-        const numRecommendations = Math.min(3, scores.length);
-        gameState.recommendations = scores.slice(0, numRecommendations).map(s => s.index);
-
-        // Get best choice (top score)
-        if (scores.length > 0) {
-            gameState.bestChoices = [scores[0].index];
-        }
-    }
-
-    function getNeighbors(index) {
-        const neighbors = [];
-        const row = Math.floor(index / 5);
-        const col = index % 5;
-        
-        for (let r = row - 1; r <= row + 1; r++) {
-            for (let c = col - 1; c <= col + 1; c++) {
-                if (r >= 0 && r < 5 && c >= 0 && c < 5 && !(r === row && c === col)) {
-                    neighbors.push(r * 5 + c);
+            for (let r = row - 1; r <= row + 1; r++) {
+                for (let c = col - 1; c <= col + 1; c++) {
+                    if (r >= 0 && r < 5 && c >= 0 && c < 5 && !(r === row && c === col)) {
+                        neighbors.push(r * 5 + c);
+                    }
                 }
             }
-        }
-        return neighbors;
-    }
-
-    // === ANIMATIONS ===
-    async function animateGridReveal() {
-        const cells = document.querySelectorAll('.grid-cell');
-        
-        // First, show all cells as loading
-        for (let i = 0; i < cells.length; i++) {
-            cells[i].classList.add('loading');
-            cells[i].style.animationDelay = `${i * 0.05}s`;
-        }
-        
-        await sleep(1500);
-
-        // Reveal mines and safe cells
-        for (let i = 0; i < cells.length; i++) {
-            const cell = cells[i];
-            cell.classList.remove('loading');
-            
-            if (gameState.mines.includes(i)) {
-                // Mine cell
-                cell.classList.add('mine', 'revealed');
-                cell.textContent = '💣';
-            } else {
-                // ALL safe cells (revealed or not) should show diamond
-                cell.classList.add('safe', 'revealed');
-                cell.textContent = '💎';
-            }
-            
-            // Add recommendation markers
-            if (gameState.recommendations.includes(i)) {
-                cell.classList.add('recommended');
-            }
-            if (gameState.bestChoices.includes(i)) {
-                cell.classList.add('best-choice');
-            }
-
-            // Style ALL safe cells as green (even if not revealed)
-            if (!gameState.mines.includes(i)) {
-                cell.classList.add('safe');
-            }
-
-            // Animate reveal
-            cell.style.animationDelay = `${i * 0.1}s`;
-            cell.classList.add('revealed');
-            
-            await sleep(50);
+            return neighbors;
         }
 
-        // === UPDATE STATS HERE (AFTER ANIMATION COMPLETES) ===
-        updateStats();
-        showNotification("ANALYSIS COMPLETE", "success");
-        saveGameState();
+        async function animateGridReveal() {
+            const cells = document.querySelectorAll('.grid-cell');
+            
+            // Show loading animation
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].classList.add('loading');
+                cells[i].style.animationDelay = `${i * 0.05}s`;
+            }
+            
+            await sleep(1500);
 
-        // Update prediction display
-        updatePredictionDisplay();
-    }
+            // Reveal mines and safe cells
+            for (let i = 0; i < cells.length; i++) {
+                const cell = cells[i];
+                cell.classList.remove('loading');
+                
+                if (gameState.mines.includes(i)) {
+                    cell.classList.add('mine', 'revealed');
+                    cell.textContent = '💣';
+                } else {
+                    cell.classList.add('safe', 'revealed');
+                    cell.textContent = '💎';
+                }
 
-    function showLoading(show) {
-        if (show) {
+                cell.style.animationDelay = `${i * 0.1}s`;
+                cell.classList.add('revealed');
+                
+                await sleep(50);
+            }
+
+            // Update stats
+            document.getElementById('safeCount').textContent = gameState.gridSize - gameState.bombs;
+            
+            const randomAccuracy = 95 + Math.floor(Math.random() * 6);
+            document.getElementById('accuracy').textContent = `${randomAccuracy}%`;
+
+            // Update prediction display
+            updatePredictionDisplay();
+        }
+
+        function updatePredictionDisplay() {
+            if (gameState.recommendations.length > 0) {
+                const recNumbers = gameState.recommendations.map(i => i + 1);
+                const bestChoice = gameState.bestChoices[0] + 1;
+                const currentTime = getCurrentTimeFormatted();
+                
+                let prediction = `ANALYSIS COMPLETED. SAFE PICKS FOR THIS ROUND 🟢<br><br>`;
+                prediction += `<span style="color: var(--neon-blue); font-size: 0.9rem;">
+                    ⏰ PREDICTION TIME: <span class="cyber-highlight">${currentTime}</span>
+                </span><br>`;
+                
+                if (gameState.bombs >= 5) {
+                    prediction += `<span class="danger-highlight">⚠️ HIGH RISK GAME ⚠️</span><br>`;
+                    prediction += `Survival chance: <span class="danger-highlight">${Math.round((25-gameState.bombs)/25*100)}%</span><br><br>`;
+                    prediction += `<span class="cyber-highlight">SAFEST CELL: ${recNumbers[0]}</span>`;
+                } else {
+                    prediction += `TOP RECOMMENDATIONS: <span class="cyber-highlight">${recNumbers.join(', ')}</span><br>`;
+                    prediction += `BEST CHOICE: <span class="cyber-highlight">${bestChoice}</span><br><br>`;
+                    prediction += `<span class="danger-highlight">${gameState.mines.length} BOMBS</span> DETECTED`;
+                }
+                
+                document.getElementById('predictionDisplay').innerHTML = prediction;
+            }
+        }
+
+        function updatePrediction(message) {
+            document.getElementById('predictionDisplay').innerHTML = message;
+        }
+
+        async function updateUsageCount() {
+            try {
+                const userRef = db.collection('users').doc(deviceId);
+                const userDoc = await userRef.get();
+                
+                if (userDoc.exists) {
+                    const currentCount = userDoc.data().usageCount || 0;
+                    await userRef.update({
+                        username: username,
+                        usageCount: currentCount + 1,
+                        lastActive: new Date()
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating usage count:', error);
+            }
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showLoading(text) {
+            if (text) loadingText.textContent = text;
             loadingOverlay.classList.add('active');
-        } else {
+        }
+
+        function hideLoading() {
             loadingOverlay.classList.remove('active');
         }
-    }
 
-    // === UI UPDATES ===
-    function updatePrediction(message) {
-        const predictionText = message
-            .replace(/SAFE/gi, '<span class="cyber-highlight">$&</span>')
-            .replace(/BOMB/gi, '<span class="danger-highlight">$&</span>')
-            .replace(/\d+/g, '<span class="cyber-highlight">$&</span>');
-        
-        predictionDisplay.innerHTML = predictionText;
-    }
-
-    function updatePredictionDisplay() {
-        if (gameState.recommendations.length > 0) {
-            const recNumbers = gameState.recommendations.map(i => i + 1);
-            const bestChoice = gameState.bestChoices[0] + 1;
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
             
-            // Get current time
-            const currentTime = getFormattedTime();
-            
-            let prediction = `SCANING <span class="cyber-highlight">COMPLETED</span> THESE ARE YOUR <span class="cyber-highlight">SAFE</span> PICKS FOR THIS ROUND 🟢<br><br>`;
-            
-            // Add time information
-            prediction += `<span style="color: var(--neon-blue); font-size: 0.9rem;">
-                ⏰ PREDICTION TIME: <span class="cyber-highlight">${currentTime}</span>
-            </span><br>`;
-            
-            // Special warning for high-risk games
-            if (gameState.bombs >= 5) {
-                prediction += `<span class="danger-highlight">⚠️ HIGH RISK GAME ⚠️</span><br>`;
-                prediction += `With ${gameState.bombs} bombs, survival chance: <span class="danger-highlight">${Math.round((25-gameState.bombs)/25*100)}%</span><br><br>`;
-                prediction += `<span class="cyber-highlight">SAFEST SINGLE CELL: ${recNumbers[0]}</span><br>`;
-                prediction += `Advice: <span class="danger-highlight">Play only 2 rounds</span>`;
-            } else {
-                prediction += `TOP RECOMMENDATIONS: <span class="cyber-highlight">${recNumbers.join(', ')}</span><br>`;
-                prediction += `BEST CHOICE: <span class="cyber-highlight">${bestChoice}</span> (LOWEST RISK)<br><br>`;
-                prediction += `<span class="danger-highlight">${gameState.mines.length} BOMBS</span> DETECTED IN GRID`;
-            }
-            
-            predictionDisplay.innerHTML = prediction;
-        } else {
-            updatePrediction("ANALYSIS IN PROGRESS...");
-        }
-    }
-
-    function updateStats() {
-        safeCount.textContent = gameState.gridSize - gameState.bombs;
-        bombCount.textContent = gameState.bombs;
-        
-        // Generate random accuracy between 95-100%
-        const randomAccuracy = 95 + Math.floor(Math.random() * 6);
-        accuracy.textContent = `${randomAccuracy}%`;
-    }
-
-    function showNotification(message, type = "info") {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: ${type === 'success' ? 'var(--neon-green)' : 
-                       type === 'warning' ? 'var(--neon-yellow)' : 
-                       type === 'danger' ? 'var(--neon-red)' : 'var(--neon-blue)'};
-            color: #000;
-            padding: 12px 25px;
-            border-radius: 30px;
-            font-family: var(--font-cyber);
-            font-weight: 700;
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.3s;
-            z-index: 2000;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-
-        // Animate in
-        setTimeout(() => {
-            notification.style.opacity = '1';
-            notification.style.top = '20px';
-        }, 10);
-
-        // Remove after delay
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.top = '-50px';
             setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 2000);
-    }
-
-    // === UTILITY FUNCTIONS ===
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function setupEventListeners() {
-        startBtn.onclick = startGame;
-        resetBtn.onclick = resetGame;
-    }
-    
-    // Save when page is about to be hidden
-    document.addEventListener('visibilitychange', function() {
-        if (document.hidden && gameState.active) {
-            saveGameState();
+                notification.classList.remove('show');
+            }, 3000);
         }
-    });
 
-    // Also save when user leaves the page
-    window.addEventListener('beforeunload', function() {
-        if (gameState.active) {
-            saveGameState();
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('currentTime').textContent = timeString;
         }
-    });
 
-    // === INITIALIZE GAME ===
-    document.addEventListener('DOMContentLoaded', initGame);
-</script>
+        function getCurrentTimeFormatted() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            return `${hours}:${minutes} ${ampm}`;
+        }
 
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
 
-</body></html>
+        async function loadAdminSettings() {
+            try {
+                const settingsDoc = await db.collection('settings').doc('app').get();
+                if (settingsDoc.exists) {
+                    const settings = settingsDoc.data();
+                    
+                    // Update WhatsApp number
+                    if (settings.whatsappNumber) {
+                        whatsappIcon.href = `https://wa.me/${settings.whatsappNumber}`;
+                    }
+                    
+                    // Update channel link
+                    if (settings.channelLink) {
+                        channelIcon.href = settings.channelLink;
+                    }
+                    
+                    // Update app name
+                    if (settings.appName) {
+                        appTitle.textContent = settings.appName;
+                        document.title = settings.appName;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading admin settings:', error);
+            }
+        }
+
+        function showInfo() {
+            showNotification(`App Version: 2.0.0 | Username: ${username} | Status: ${userStatus}`, 'info');
+        }
+    </script>
+</body>
+</html>
